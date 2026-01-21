@@ -1,0 +1,6 @@
+@gis_backend_HostAddress = http://localhost:5249
+
+GET {{gis_backend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
