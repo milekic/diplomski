@@ -1,13 +1,35 @@
+using gis_backend.Data;
+using Microsoft.EntityFrameworkCore;
+using gis_backend.Repositories;
+using gis_backend.Services;
+
+
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+
+//servis za bazu
+builder.Services.AddDbContext<ApplicationDBContext>(options =>
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
+
+
 var app = builder.Build();
+
+// global error handler 
+app.UseExceptionHandler("/error");
+app.Map("/error", () => Results.Problem("Došlo je do greške na serveru."));
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
