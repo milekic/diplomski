@@ -1,55 +1,20 @@
+import LayersTree from "../features/map/components/LayersTree";
+import { Link } from "react-router-dom";
+
+
 export default function UserDashboardPage() {
   return (
-    <div className="container-fluid vh-100 d-flex flex-column">
+    <div className="container-fluid h-100">
 
-      {/* ===== HEADER ===== */}
-      <div className="row bg-light border-bottom p-3 align-items-center">
-        <div className="col">
-          <h4 className="mb-0">GIS sistem za detekciju opasnosti</h4>
-        </div>
-        <div className="col text-end">
-          <span className="me-3">Korisnik</span>
-          <button className="btn btn-outline-secondary btn-sm">
-            Logout
-          </button>
-        </div>
-      </div>
-
+    
+      
       {/* ===== MAIN CONTENT ===== */}
-      <div className="row flex-grow-1">
+      <div className="row h-100">
 
         {/* ===== LEFT SIDEBAR ===== */}
         <div className="col-2 border-end p-3">
 
-          <h6>Moje oblasti</h6>
-
-          <input
-            type="text"
-            className="form-control mb-3"
-            placeholder="Pretraži..."
-          />
-
-          <div className="mb-3">
-            <button className="btn btn-sm btn-outline-primary me-1">
-              Moje
-            </button>
-            <button className="btn btn-sm btn-outline-secondary me-1">
-              Globalni
-            </button>
-            <button className="btn btn-sm btn-outline-secondary">
-              Uključeni
-            </button>
-          </div>
-
-          <ul className="list-group mb-3">
-            <li className="list-group-item">Oblast 1</li>
-            <li className="list-group-item">Oblast 2</li>
-            <li className="list-group-item">Oblast 3</li>
-          </ul>
-
-          <button className="btn btn-primary w-100">
-            + Novi poligon
-          </button>
+            <LayersTree onLayersChange={(keys) => console.log("Slojevi:", keys)} />
 
         </div>
 
