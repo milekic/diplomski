@@ -1,9 +1,11 @@
 ﻿using gis_backend.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace gis_backend.Controllers
 {
     [Route("api/users")]
+    [Authorize]
     [ApiController]
     public class UserController :ControllerBase
     {
