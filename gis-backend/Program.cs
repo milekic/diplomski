@@ -2,6 +2,10 @@ using gis_backend.Data;
 using Microsoft.EntityFrameworkCore;
 using gis_backend.Repositories;
 using gis_backend.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+
 
 
 
@@ -20,11 +24,12 @@ builder.Services.AddCors(options =>
     options.AddPolicy("ReactApp", policy =>
     {
         policy
-            .WithOrigins("http://localhost:5173")
+            .WithOrigins("http://localhost:5174", "http://localhost:5173")
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
 });
+
 
 
 //servis za bazu
@@ -35,6 +40,31 @@ builder.Services.AddDbContext<ApplicationDBContext>(options =>
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<AuthService>();
+
+//jwt token
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        var jwt = builder.Configuration.GetSection("Jwt");
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+
+            ValidIssuer = jwt["Issuer"],
+            ValidAudience = jwt["Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt["Key"]!)),
+
+            ClockSkew = TimeSpan.Zero 
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+
 
 
 var app = builder.Build();
@@ -53,6 +83,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseCors("ReactApp");
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
