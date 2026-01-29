@@ -2,20 +2,22 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import UserDashboardPage from "../pages/UserDashboardPage";
 import AdminDashboardPage from "../pages/AdminDashboardPage";
 import LoginPage from "../pages/LoginPage";
+import RegisterPage from "../pages/RegisterPage";
 
 
 export default function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Početna ruta -> preusmjeri na dashboard */}
+        {/* Početna ruta -> preusmjeri na login */}
         <Route path="/" element={<Navigate to="/login" replace />} />
 
 
         <Route path="/login" element={<LoginPage/>}/>
-        {/* User stranica */}
+         <Route path="/register" element={<RegisterPage />} />
+
+       
         <Route path="/userDashboard" element={<UserDashboardPage />} />
-        {/*AdminDashboar stranica */}
         <Route path="/adminDashboard" element={<AdminDashboardPage />} />
 
 
