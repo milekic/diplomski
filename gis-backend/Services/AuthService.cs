@@ -63,30 +63,31 @@ namespace gis_backend.Services
 
 
 
-        public async Task<LoginResponseDto?> LoginAsync(LoginRequestDto request)
+        public async Task<(bool ok, int statusCode, string message, LoginResponseDto? data)> LoginAsync(LoginRequestDto request)
         {
             var user = await _userRepository.GetByUserNameAsync(request.UserName);
 
-            if (user == null) return null;
-            if (user.IsSuspended) return null;
+            if (user == null)
+                return (false, 401, "Pogrešan username ili lozinka.", null);
 
-            var verify = _hasher.VerifyHashedPassword(
-                user,
-                user.PasswordHash,
-                request.Password
-            );
+            if (user.IsSuspended)
+                return (false, 403, "Nalog je suspendovan. Kontaktirajte administratora.", null);
+
+            var verify = _hasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
 
             if (verify == PasswordVerificationResult.Failed)
-                return null;
+                return (false, 401, "Pogrešan username ili lozinka.", null);
 
             var token = GenerateJwtToken(user);
 
-            return new LoginResponseDto
+            var dto = new LoginResponseDto
             {
                 Token = token,
                 UserName = user.userName,
                 Role = user.Role.ToString()
             };
+
+            return (true, 200, "Login uspješan.", dto);
         }
 
 

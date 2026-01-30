@@ -35,13 +35,14 @@ namespace gis_backend.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var result = await _authService.LoginAsync(request);
+            var (ok, statusCode, message, data) = await _authService.LoginAsync(request);
 
-            if (result == null)
-                return Unauthorized("Pogrešan username/lozinka ili nalog suspendovan.");
+            if (!ok)
+                return StatusCode(statusCode, new { message });
 
-            return Ok(result);
+            return Ok(data);
         }
+
 
 
 
