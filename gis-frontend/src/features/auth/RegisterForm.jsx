@@ -51,7 +51,7 @@ export default function RegisterForm() {
       if (err?.response?.status === 400) {
         setError(msg || "Registracija nije uspjela.");
       } else {
-        setError("Greška na serveru. Pokušaj ponovo.");
+        setError("Greška. Pokušaj ponovo.");
       }
     } finally {
       setLoading(false);
@@ -188,9 +188,7 @@ export default function RegisterForm() {
                 </Link>
               </div>
 
-              <div className="text-center text-muted mt-4" style={{ fontSize: 12 }}>
-                © {new Date().getFullYear()} GIS Sistem • Sigurna registracija
-              </div>
+              
             </Form>
           </Card.Body>
         </Card>

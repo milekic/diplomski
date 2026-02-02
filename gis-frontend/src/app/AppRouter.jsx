@@ -5,6 +5,7 @@ import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
 import OblastiPage from "../pages/OblastiPage";
 import AppLayout from "./AppLayout";
+import NewEventPage from "../pages/NewEventPage";
 
 export default function AppRouter() {
   return (
@@ -13,15 +14,16 @@ export default function AppRouter() {
         {/* početna -> login */}
         <Route path="/" element={<Navigate to="/login" replace />} />
 
-        {/* stranice bez navbara */}
+        {/* stranice koje nisu u  navbar-u */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
-        {/* stranice SA navbarom */}
+        {/* stranice unutar navbara */}
         <Route element={<AppLayout />}>
           <Route path="/userDashboard" element={<UserDashboardPage />} />
           <Route path="/adminDashboard" element={<AdminDashboardPage />} />
           <Route path="/areas" element={<OblastiPage />} />
+          
         </Route>
 
         <Route path="*" element={<div className="p-4">Stranica ne postoji</div>} />

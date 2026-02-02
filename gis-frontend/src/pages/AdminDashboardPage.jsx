@@ -2,18 +2,6 @@ export default function AdminDashboardPage() {
   return (
     <div className="container-fluid vh-100 d-flex flex-column">
 
-      {/* ===== HEADER ===== */}
-      <div className="row bg-light border-bottom p-3 align-items-center">
-        <div className="col">
-          <h4 className="mb-0">GIS Hazard Monitor - Admin</h4>
-        </div>
-        <div className="col text-end">
-          <span className="me-3">Administrator</span>
-          <button className="btn btn-outline-secondary btn-sm">
-            Logout
-          </button>
-        </div>
-      </div>
 
       {/* ===== MAIN CONTENT ===== */}
       <div className="row flex-grow-1">
