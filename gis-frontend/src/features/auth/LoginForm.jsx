@@ -49,7 +49,7 @@ export default function LoginForm() {
       } else if (err?.response?.status === 401) {
         setError(msg || "Pogrešan username ili lozinka.");
       } else {
-        setError("Greška na serveru. Pokušaj ponovo.");
+        setError("Greška. Pokušaj ponovo.");
       }
     } finally {
       setLoading(false);
@@ -160,10 +160,7 @@ export default function LoginForm() {
               </Link>
             </div>
 
-            {/* Footer */}
-            <div className="text-center text-muted mt-4" style={{ fontSize: 12 }}>
-              © {new Date().getFullYear()} GIS Sistem • Sigurna autentifikacija
-            </div>
+            
           </Card.Body>
         </Card>
       </Container>

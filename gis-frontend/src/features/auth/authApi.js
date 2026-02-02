@@ -11,3 +11,9 @@ export const register = async (data) => {
   const response = await apiClient.post("/Auth/register", data);
   return response.data;
 };
+
+
+export const logout =()=>{
+  localStorage.removeItem("token");
+  localStorage.removeItem("role")
+}

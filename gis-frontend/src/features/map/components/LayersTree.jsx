@@ -4,7 +4,7 @@ import { Tree } from "antd";
 // hardkodovano
 const treeData = [
   {
-    title: "Golbalne mape",
+    title: "Globalne mape",
     key: "admin",
     children: [
       { title: "Gradska 2", key: "gradska2" },

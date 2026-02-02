@@ -1,5 +1,6 @@
 import LayersTree from "../features/map/components/LayersTree";
 import { Link } from "react-router-dom";
+import MapView from "../features/map/components/MapView";
 
 
 export default function UserDashboardPage() {
@@ -22,7 +23,7 @@ export default function UserDashboardPage() {
         <div className="col-8 p-3 d-flex flex-column">
 
           <div className="border rounded flex-grow-1 d-flex justify-content-center align-items-center bg-light">
-            <h5 className="text-muted">MAPA (OpenLayers će ići ovdje)</h5>
+            <MapView/>
           </div>
 
         </div>
@@ -49,15 +50,9 @@ export default function UserDashboardPage() {
           </div>
 
           <div className="d-grid gap-2 mt-3">
-            <button className="btn btn-outline-primary btn-sm">
-              + Dodaj događaj
-            </button>
-            <button className="btn btn-outline-secondary btn-sm">
-              Uredi pragove
-            </button>
-            <button className="btn btn-outline-success btn-sm">
-              Istorija
-            </button>
+            
+            
+           
             <button className="btn btn-outline-dark btn-sm">
               PDF izvještaj
             </button>
