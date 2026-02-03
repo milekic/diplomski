@@ -1,18 +1,33 @@
 import { Outlet, useNavigate, Navigate, useLocation } from "react-router-dom";
 import AppNavbar from "../shared/ui/AppNavbar";
-import { logout } from "../features/auth/authApi";
+
 import { routeAccess } from "./routeAccess";
 import AppFooter from "../shared/ui/AppFooter";
+import { jwtDecode } from "jwt-decode";
+import { getUserFromToken, isTokenExpired } from "../features/auth/token";
+import { useDispatch, useSelector } from "react-redux";
+import { clearAuth } from "../features/auth/authSlice";
+
+
+
 
 export default function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useDispatch();
 
-  const token = localStorage.getItem("token");
-  const role = localStorage.getItem("role");
+  //dobijanje podataka odnosno stanja pomocu redux selektora
+  const { token, role, username, isAuthenticated } = useSelector(
+     state => state.auth
+  );
 
   // nisi ulogovan -> login
-  if (!token) return <Navigate to="/login" replace />;
+  if (!isAuthenticated || !token) return <Navigate to="/login" replace />;
+
+  if (isTokenExpired(token)) {
+  dispatch(clearAuth());
+  return <Navigate to="/login" replace />;
+  }
 
   //  Provjera dozvole za trenutni URL
   const rule = routeAccess.find(r => location.pathname.startsWith(r.prefix));
@@ -23,7 +38,7 @@ export default function AppLayout() {
   }
 
   const handleLogout = () => {
-    logout();
+    dispatch(clearAuth());
     navigate("/login");
   };
 
@@ -32,7 +47,8 @@ export default function AppLayout() {
 
       {/*Header */}
       <AppNavbar
-        userLabel={role === "ADMIN" ? "Admin" : "Korisnik"}
+        userLabel={username}
+        role={role}
         onLogout={handleLogout}
       />
 

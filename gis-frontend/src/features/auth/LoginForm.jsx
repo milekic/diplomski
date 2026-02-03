@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { login } from "./authApi";
+import { useDispatch } from "react-redux";
+import { setCredentials } from "./authSlice";
+
 
 import {
   Container,
@@ -20,6 +23,8 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,9 +40,9 @@ export default function LoginForm() {
       
       const token = result.token ?? result.Token;
       const role = result.role ?? result.Role;
-
-      localStorage.setItem("token", token);
-      localStorage.setItem("role", role);
+      
+      //popnjavanje redux state-a
+      dispatch(setCredentials({ token }));
 
       if (role === "ADMIN") navigate("/adminDashboard");
       else navigate("/userDashboard");
