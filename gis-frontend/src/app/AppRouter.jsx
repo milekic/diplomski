@@ -3,7 +3,7 @@ import UserDashboardPage from "../pages/UserDashboardPage";
 import AdminDashboardPage from "../pages/AdminDashboardPage";
 import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
-import OblastiPage from "../pages/OblastiPage";
+import AreasPage from "../pages/AreasPage";
 import AppLayout from "./AppLayout";
 import NewEventPage from "../pages/NewEventPage";
 
@@ -22,7 +22,7 @@ export default function AppRouter() {
         <Route element={<AppLayout />}>
           <Route path="/userDashboard" element={<UserDashboardPage />} />
           <Route path="/adminDashboard" element={<AdminDashboardPage />} />
-          <Route path="/areas" element={<OblastiPage />} />
+          <Route path="/areas" element={<AreasPage />} />
           
         </Route>
 
