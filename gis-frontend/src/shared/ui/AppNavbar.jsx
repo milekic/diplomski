@@ -1,7 +1,7 @@
 import { Link, NavLink } from "react-router-dom";
 import { getUserFromToken } from "../../features/auth/token";
 
-export default function AppNavbar({ userLabel = "Korisnik",role, onLogout }) {
+export default function AppNavbar({ userLabel, role, onLogout }) {
 
   //ruta koja je aktivna - plava boja
   const linkClass = ({ isActive }) =>

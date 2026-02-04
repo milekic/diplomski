@@ -5,6 +5,7 @@ using gis_backend.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Npgsql.EntityFrameworkCore.PostgreSQL;
 
 
 
@@ -35,7 +36,10 @@ builder.Services.AddCors(options =>
 //servis za bazu
 builder.Services.AddDbContext<ApplicationDBContext>(options =>
 {
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.UseNpgsql(
+    builder.Configuration.GetConnectionString("DefaultConnection"),
+    x => x.UseNetTopologySuite()
+    );
 });
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();

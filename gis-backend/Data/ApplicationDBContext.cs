@@ -12,10 +12,30 @@ namespace gis_backend.Data
         {
         }
 
-        //DbSet je genericka klasa, ona ne cuva podatke u memoriji, vec omogucava da se radi sa tabelom iz baze onda
+        
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            //obezbejedjuje da u Tabeli EventType ime dogadjaja bude jedinstveno
+            modelBuilder.Entity<EventType>()
+                .HasIndex(e => e.Name)
+                .IsUnique();
+
+            modelBuilder.Entity<AreaMonitor>()
+                .HasIndex(x => new { x.AreaId, x.EventTypeId })
+                .IsUnique();
+        }
+
+
+
+
+        //DbSet omogucava da se radi sa tabelom iz baze onda
         //kad se posalje upit
 
         public DbSet<User> Users { get; set; }
-
+        public DbSet<Area> Areas { get; set; }
+        public DbSet<EventType> EventTypes { get; set; }
+        public DbSet<AreaMonitor> AreaMonitors { get; set; }
     }
 }
