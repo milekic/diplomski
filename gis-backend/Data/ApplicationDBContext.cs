@@ -22,9 +22,11 @@ namespace gis_backend.Data
                 .HasIndex(e => e.Name)
                 .IsUnique();
 
+            // Unique samo za aktivne, baza ne dozvoljava dva aktivna reda na jednoj oblasti za isti dogadjaj
             modelBuilder.Entity<AreaMonitor>()
                 .HasIndex(x => new { x.AreaId, x.EventTypeId })
-                .IsUnique();
+                .IsUnique()
+                .HasFilter("\"ActiveTo\" IS NULL");
         }
 
 

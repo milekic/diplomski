@@ -14,7 +14,10 @@ namespace gis_backend.Models
 
         [MaxLength(1000)]
         public string? Description { get; set; }
-
+        // Jedinica mjerenja (m, °C, Richter, m2...)
+        [Required]
+        [MaxLength(50)]
+        public string Unit { get; set; } = string.Empty;
         [Required]
         public bool IsActive { get; set; } = true;
     }

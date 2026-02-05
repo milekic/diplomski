@@ -1,12 +1,7 @@
 export default function AreasPage() {
   return (
-    <div className="container-fluid vh-100 d-flex flex-column">
-
-      
-
-      {/* CONTENT */}
+    <div className="container-fluid d-flex flex-column">
       <div>Sadrzaj</div>
-
     </div>
   );
 }

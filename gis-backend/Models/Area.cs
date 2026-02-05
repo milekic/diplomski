@@ -16,10 +16,10 @@ namespace gis_backend.Models
         [MaxLength(1000)]
         public string? Description { get; set; }
 
-        [Required]
+        
         public bool IsGlobal { get; set; } = false;
 
-        [Required]
+        
         public bool IsActive { get; set; } = true;
 
         // id korisnika koji je krairao oblast
