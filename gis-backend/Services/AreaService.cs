@@ -13,17 +13,43 @@ namespace gis_backend.Services
             _repo = repo;
         }
 
-        //metoda vraca sve aktivne oblasti za odabranog korisnika
-        //u ovom sloju se vrsi mapiranje
         public async Task<List<AreaListItemDto>> GetMyAreasAsync(int userId)
         {
             var areas = await _repo.GetActiveUserAreasAsync(userId);
 
             return areas
-                .OrderBy(a => a.Name) 
+                .OrderBy(a => a.Name)
                 .Select(a => a.ToListItemDto())
                 .ToList();
         }
 
+        public async Task<AreaDeleteResponseDto> SoftDeleteAsync(int id, int userId)
+        {
+            
+            var area = await _repo.GetByIdForOwnerAsync(id, userId);
+
+            if (area == null)
+                throw new KeyNotFoundException("Oblast ne postoji ili ne pripada korisniku.");
+
+            if (!area.IsActive)
+            {
+                return new AreaDeleteResponseDto
+                {
+                    Id = area.Id,
+                    IsActive = area.IsActive,
+                    Message = "Oblast je već obrisana (neaktivna)."
+                };
+            }
+
+            area.IsActive = false;
+            await _repo.SaveChangesAsync();
+
+            return new AreaDeleteResponseDto
+            {
+                Id = area.Id,
+                IsActive = area.IsActive,
+                Message = "Oblast je uspješno obrisana (soft delete)."
+            };
+        }
     }
 }

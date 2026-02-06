@@ -25,9 +25,24 @@ namespace gis_backend.Repositories
         public async Task<List<Area>> GetActiveUserAreasAsync(int userId)
         {
             return await _context.Areas
+                .AsNoTracking()
                 .Where(a => a.IsActive && a.OwnerUserId == userId)
                 .ToListAsync();
         }
 
+        public async Task<Area?> GetByIdAsync(int id)
+        {
+            return await _context.Areas
+                .FirstOrDefaultAsync(a => a.Id == id);
+        }
+
+        public async Task<Area?> GetByIdForOwnerAsync(int id, int ownerUserId)
+        {
+            return await _context.Areas
+                .FirstOrDefaultAsync(a => a.Id == id && a.OwnerUserId == ownerUserId);
+        }
+
+        public Task SaveChangesAsync()
+            => _context.SaveChangesAsync();
     }
 }

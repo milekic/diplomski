@@ -29,13 +29,29 @@ namespace gis_backend.Controllers
             return int.Parse(idClaim);
         }
 
-        // GET: api/areas/my
         [HttpGet("my")]
         public async Task<ActionResult<List<AreaListItemDto>>> GetMyAreas()
         {
             var userId = GetCurrentUserId();
             var list = await _service.GetMyAreasAsync(userId);
             return Ok(list);
+        }
+
+        // DELETE: api/areas/5
+        [HttpDelete("{id:int}")]
+        public async Task<ActionResult<AreaDeleteResponseDto>> Delete(int id)
+        {
+            var userId = GetCurrentUserId();
+
+            try
+            {
+                var result = await _service.SoftDeleteAsync(id, userId);
+                return Ok(result); 
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
         }
     }
 }

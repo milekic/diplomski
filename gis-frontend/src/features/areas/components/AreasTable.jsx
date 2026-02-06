@@ -17,30 +17,32 @@ export default function AreasTable({
   return (
     <div className="d-flex flex-column h-100">
       {/* Toolbar */}
-      <div className="d-flex align-items-center gap-2 mb-2">
-        <button
-          className="btn btn-outline-secondary btn-sm"
-          onClick={onViewDetails}
-          disabled={!selectedId}
-        >
-          Pregled detalja
-        </button>
+      <div className="d-flex align-items-center justify-content-between mb-2">
+        <div className="d-flex align-items-center gap-2">
+          <button
+            className="btn btn-outline-secondary btn-sm"
+            onClick={onViewDetails}
+            disabled={!selectedId}
+          >
+            Pregled detalja
+          </button>
 
-        <button
-          className="btn btn-outline-dark btn-sm"
-          onClick={() => onEdit(selectedId)}
-          disabled={!selectedId}
-        >
-          Edit
-        </button>
+          <button
+            className="btn btn-outline-dark btn-sm"
+            onClick={() => onEdit(selectedId)}
+            disabled={!selectedId}
+          >
+            Edit
+          </button>
 
-        <button
-          className="btn btn-outline-danger btn-sm"
-          onClick={() => onDelete(selectedId)}
-          disabled={!selectedId}
-        >
-          Obriši
-        </button>
+          <button
+            className="btn btn-outline-danger btn-sm"
+            onClick={() => onDelete(selectedId)}
+            disabled={!selectedId}
+          >
+            Obriši
+          </button>
+        </div>
 
         <button className="btn btn-success btn-sm" onClick={onAdd}>
           + Dodaj
@@ -49,9 +51,10 @@ export default function AreasTable({
 
       {/* Table container */}
       <div className="border rounded flex-grow-1 bg-light p-2 d-flex flex-column">
-        <div className="flex-grow-1" style={{ overflow: "auto" }}>
-          <table className="table table-sm table-hover align-middle mb-0">
-            <thead className="table-light position-sticky top-0">
+        {/* Table */}
+        <div className="flex-grow-1 rounded" style={{ overflow: "auto" }}>
+          <table className="table table-sm table-hover align-middle mb-0 bg-white">
+            <thead className="table-light position-sticky top-0" style={{ zIndex: 1 }}>
               <tr>
                 <th>Naziv</th>
                 <th>Opis</th>
@@ -91,32 +94,49 @@ export default function AreasTable({
         </div>
 
         {/* Pagination */}
-        <div className="d-flex justify-content-between align-items-center mt-2 small text-muted">
-          <div>
-            Stranica {currentPage} od {totalPages}
-          </div>
+        <div className="d-flex justify-content-center mt-2">
+          
+          <nav aria-label="Areas pagination">
+            <ul className="pagination pagination-sm mb-0">
+              {/* Previous */}
+              <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                <button
+                  type="button"
+                  className="page-link"
+                  onClick={onPrev}
+                  disabled={currentPage === 1}
+                >
+                  Prethodna
+                </button>
+              </li>
 
-          <div className="btn-group btn-group-sm">
-            <button
-              className="btn btn-outline-secondary"
-              onClick={onPrev}
-              disabled={currentPage === 1}
-            >
-              Prethodna
-            </button>
+              {/* Page numbers  */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <li
+                  key={page}
+                  className={`page-item ${page === currentPage ? "active" : ""}`}
+                >
+                  <span className="page-link">{page}</span>
+                </li>
+              ))}
 
-            <button className="btn btn-primary" disabled>
-              {currentPage}
-            </button>
-
-            <button
-              className="btn btn-outline-secondary"
-              onClick={onNext}
-              disabled={currentPage === totalPages}
-            >
-              Sljedeća
-            </button>
-          </div>
+              {/* Next */}
+              <li
+                className={`page-item ${
+                  currentPage === totalPages ? "disabled" : ""
+                }`}
+              >
+                <button
+                  type="button"
+                  className="page-link"
+                  onClick={onNext}
+                  disabled={currentPage === totalPages}
+                >
+                  Sljedeća
+                </button>
+              </li>
+            </ul>
+          </nav>
         </div>
       </div>
     </div>
