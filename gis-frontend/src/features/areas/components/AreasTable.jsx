@@ -1,0 +1,144 @@
+export default function AreasTable({
+  items = [],
+  selectedId = null,
+
+  // pagination props
+  currentPage = 1,
+  totalPages = 1,
+  onPrev = () => {},
+  onNext = () => {},
+
+  onSelect = () => {},
+  onAdd = () => {},
+  onEdit = () => {},
+  onDelete = () => {},
+  onViewDetails = () => {},
+}) {
+  return (
+    <div className="d-flex flex-column h-100">
+      {/* Toolbar */}
+      <div className="d-flex align-items-center justify-content-between mb-2">
+        <div className="d-flex align-items-center gap-2">
+          <button
+            className="btn btn-outline-secondary btn-sm"
+            onClick={onViewDetails}
+            disabled={!selectedId}
+          >
+            Pregled detalja
+          </button>
+
+          <button
+            className="btn btn-outline-dark btn-sm"
+            onClick={() => onEdit(selectedId)}
+            disabled={!selectedId}
+          >
+            Edit
+          </button>
+
+          <button
+            className="btn btn-outline-danger btn-sm"
+            onClick={() => onDelete(selectedId)}
+            disabled={!selectedId}
+          >
+            Obriši
+          </button>
+        </div>
+
+        <button className="btn btn-success btn-sm" onClick={onAdd}>
+          + Dodaj
+        </button>
+      </div>
+
+      {/* Table container */}
+      <div className="border rounded flex-grow-1 bg-light p-2 d-flex flex-column">
+        {/* Table */}
+        <div className="flex-grow-1 rounded" style={{ overflow: "auto" }}>
+          <table className="table table-sm table-hover align-middle mb-0 bg-white">
+            <thead className="table-light position-sticky top-0" style={{ zIndex: 1 }}>
+              <tr>
+                <th>Naziv</th>
+                <th>Opis</th>
+                <th style={{ width: 120 }}>Globalna</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {items.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="text-center text-muted py-4">
+                    Nema oblasti za prikaz.
+                  </td>
+                </tr>
+              ) : (
+                items.map((a) => (
+                  <tr
+                    key={a.id}
+                    role="button"
+                    className={selectedId === a.id ? "table-active" : ""}
+                    onClick={() => onSelect(a)}
+                  >
+                    <td className="fw-semibold">{a.name}</td>
+                    <td>{a.description ?? "-"}</td>
+                    <td>
+                      {a.isGlobal ? (
+                        <span className="badge text-bg-success">Da</span>
+                      ) : (
+                        <span className="badge text-bg-secondary">Ne</span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        <div className="d-flex justify-content-center mt-2">
+          
+          <nav aria-label="Areas pagination">
+            <ul className="pagination pagination-sm mb-0">
+              {/* Previous */}
+              <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                <button
+                  type="button"
+                  className="page-link"
+                  onClick={onPrev}
+                  disabled={currentPage === 1}
+                >
+                  Prethodna
+                </button>
+              </li>
+
+              {/* Page numbers  */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <li
+                  key={page}
+                  className={`page-item ${page === currentPage ? "active" : ""}`}
+                >
+                  <span className="page-link">{page}</span>
+                </li>
+              ))}
+
+              {/* Next */}
+              <li
+                className={`page-item ${
+                  currentPage === totalPages ? "disabled" : ""
+                }`}
+              >
+                <button
+                  type="button"
+                  className="page-link"
+                  onClick={onNext}
+                  disabled={currentPage === totalPages}
+                >
+                  Sljedeća
+                </button>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+  );
+}

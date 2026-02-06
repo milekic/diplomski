@@ -9,7 +9,7 @@ namespace gis_backend.Models
         [Key]
         public int Id { get; set; }
 
-        
+        //ogranicenje - u dbContext-u
         [Required]
         public int AreaId { get; set; }
 
@@ -23,11 +23,16 @@ namespace gis_backend.Models
         [ForeignKey(nameof(EventTypeId))]
         public EventType EventType { get; set; } = null!;
 
-        // omogucava da korisnik npr. ne prati dogadjaj Poplava u Krajini
-        //omogucava da odredimo da li se ovaj dogadjaj prati za ovu oblast
+        // Vrijeme kada je pracenje pocelo
         [Required]
-        public bool IsActive { get; set; } = true;
+        public DateTime ActiveFrom { get; set; } = DateTime.UtcNow;
 
-       
+        // Vrijeme kada je pracenje zavrsilo (ako je null => jos uvijek aktivno)
+        public DateTime? ActiveTo { get; set; }
+
+        // Kritični prag (npr 40°C, 3m, 6 Richter...) - alarm se aktivira kad se taj prag prekoraci
+        public double? Threshold { get; set; }
+
+
     }
 }
