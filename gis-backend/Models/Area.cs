@@ -22,6 +22,9 @@ namespace gis_backend.Models
         
         public bool IsActive { get; set; } = true;
 
+        // da li se oblast trenutno prati
+        public bool IsMonitored { get; set; } =false;
+
         // id korisnika koji je krairao oblast
         [Required]
         public int OwnerUserId { get; set; }

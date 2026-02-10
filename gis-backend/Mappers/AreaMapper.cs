@@ -18,6 +18,7 @@ namespace gis_backend.Mappers
                 Name = area.Name,
                 Description = area.Description,
                 IsGlobal = area.IsGlobal,
+                IsMonitored= area.IsMonitored,
                 GeomGeoJson = area.Geom != null ? _geoJsonWriter.Write(area.Geom) : ""
             };
         }
