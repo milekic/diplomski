@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Npgsql.EntityFrameworkCore.PostgreSQL;
+using gis_backend.Configuration;
 
 
 
@@ -69,6 +70,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IAreaRepository, AreaRepository>();
 builder.Services.AddScoped<IAreaService, AreaService>();
+
+//za staticke podatke
+builder.Services.Configure<SpatialOptions>(
+    builder.Configuration.GetSection("Spatial")
+);
 
 
 

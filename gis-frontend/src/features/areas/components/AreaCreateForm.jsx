@@ -96,7 +96,7 @@ export default function AreaCreateForm({
               disabled={loading}
             />
             <label className="form-check-label" htmlFor="isMonitored">
-              Praćenje uključeno
+              Oblast je podrazumjvano vidljiva
             </label>
           </div>
 

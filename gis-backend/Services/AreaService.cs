@@ -8,6 +8,8 @@ using System.Text.Json;
 using System.Text.Json;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.IO;
+using Microsoft.Extensions.Options;
+using gis_backend.Configuration;
 
 
 namespace gis_backend.Services
@@ -15,14 +17,17 @@ namespace gis_backend.Services
     public class AreaService : IAreaService
     {
         private readonly IAreaRepository _repo;
+        private readonly int _defaultSrid;
 
-        public AreaService(IAreaRepository repo)
+        public AreaService(IAreaRepository repo, IOptions<SpatialOptions> spatialOptions)
         {
             _repo = repo;
+            _defaultSrid = spatialOptions.Value.DefaultSrid;
         }
 
         public async Task<List<AreaListItemDto>> GetMyAreasAsync(int userId)
         {
+            
             var areas = await _repo.GetActiveUserAreasAsync(userId);
 
             return areas
@@ -65,7 +70,7 @@ namespace gis_backend.Services
             
             var polygon = ParsePolygonFromGeoJson(request.GeomGeoJson);
 
-            polygon.SRID = 4326;
+            polygon.SRID = _defaultSrid;
 
             var area = new Area
             {
@@ -95,7 +100,7 @@ namespace gis_backend.Services
             
 
             var polygon = ParsePolygonFromGeoJson(request.GeomGeoJson);
-            polygon.SRID = 4326;
+            polygon.SRID = _defaultSrid;
 
             area.Name = request.Name.Trim();
             area.Description = request.Description;
