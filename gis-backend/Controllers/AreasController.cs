@@ -3,6 +3,7 @@ using gis_backend.DTOs.Areas;
 using gis_backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using gis_backend.DTOs.Areas;
 
 namespace gis_backend.Controllers
 {
@@ -53,5 +54,51 @@ namespace gis_backend.Controllers
                 return NotFound(new { message = ex.Message });
             }
         }
+
+        //create
+        [HttpPost]
+        public async Task<ActionResult<AreaListItemDto>> Create([FromBody] AreaCreateRequestDto request)
+        {
+            var userId = GetCurrentUserId();
+
+            try
+            {
+                var created = await _service.CreateAsync(request, userId);
+                return CreatedAtAction(nameof(GetMyAreas), new { }, created);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+
+        //update
+        [HttpPut("{id:int}")]
+        public async Task<ActionResult<AreaListItemDto>> Update(int id, [FromBody] AreaUpdateRequestDto request)
+        {
+            var userId = GetCurrentUserId();
+
+            try
+            {
+                var updated = await _service.UpdateAsync(id, request, userId);
+                return Ok(updated);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+
+
     }
 }

@@ -17,37 +17,55 @@ export default function AreasTable({
   return (
     <div className="d-flex flex-column h-100">
       {/* Toolbar */}
-      <div className="d-flex align-items-center justify-content-between mb-2">
-        <div className="d-flex align-items-center gap-2">
-          <button
-            className="btn btn-outline-secondary btn-sm"
-            onClick={onViewDetails}
-            disabled={!selectedId}
-          >
-            Pregled detalja
-          </button>
+<div className="d-flex align-items-center justify-content-between mb-2">
+  <div className="d-flex align-items-center gap-2">
+    <button
+      type="button"
+      className="btn btn-outline-secondary btn-sm"
+      onClick={onViewDetails}
+      disabled={!selectedId}
+      title="Pregled detalja"
+      aria-label="Pregled detalja"
+    >
+      <i className="bi bi-eye" />
+    </button>
 
-          <button
-            className="btn btn-outline-dark btn-sm"
-            onClick={() => onEdit(selectedId)}
-            disabled={!selectedId}
-          >
-            Edit
-          </button>
+    <button
+      type="button"
+      className="btn btn-outline-dark btn-sm"
+      onClick={() => onEdit(selectedId)}
+      disabled={!selectedId}
+      title="Izmijeni"
+      aria-label="Izmijeni"
+    >
+      <i className="bi bi-pencil" />
+    </button>
 
-          <button
-            className="btn btn-outline-danger btn-sm"
-            onClick={() => onDelete(selectedId)}
-            disabled={!selectedId}
-          >
-            Obriši
-          </button>
-        </div>
+    <button
+      type="button"
+      className="btn btn-outline-danger btn-sm"
+      onClick={onDelete}
+      disabled={!selectedId}
+      title="Obriši"
+      aria-label="Obriši"
+      >
+      <i className="bi bi-trash" />
+    </button>
 
-        <button className="btn btn-success btn-sm" onClick={onAdd}>
-          + Dodaj
-        </button>
-      </div>
+
+  </div>
+
+  <button
+    type="button"
+    className="btn btn-success btn-sm"
+    onClick={onAdd}
+    title="Dodaj oblast"
+    aria-label="Dodaj oblast"
+  >
+    <i className="bi bi-plus-lg me-0" />
+  </button>
+</div>
+
 
       {/* Table container */}
       <div className="border rounded flex-grow-1 bg-light p-2 d-flex flex-column">

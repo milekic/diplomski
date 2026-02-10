@@ -78,7 +78,7 @@ var app = builder.Build();
 
 // global error handler 
 app.UseExceptionHandler("/error");
-app.Map("/error", () => Results.Problem("Došlo je do greške na serveru."));
+app.Map("/error", () => Results.Problem("Došlo je do greške."));
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

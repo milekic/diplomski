@@ -44,5 +44,12 @@ namespace gis_backend.Repositories
 
         public Task SaveChangesAsync()
             => _context.SaveChangesAsync();
+
+        public async Task AddAsync(Area area)
+        {
+            await _context.Areas.AddAsync(area);
+        }
+
+
     }
 }

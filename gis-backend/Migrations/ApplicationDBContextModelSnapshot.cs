@@ -46,6 +46,9 @@ namespace gis_backend.Migrations
                     b.Property<bool>("IsGlobal")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsMonitored")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(150)
