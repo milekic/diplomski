@@ -9,12 +9,13 @@ import VectorSource from "ol/source/Vector";
 import { fromLonLat } from "ol/proj";
 import Draw from "ol/interaction/Draw";
 import GeoJSON from "ol/format/GeoJSON";
+import { DEFAULT_CENTER_LONLAT,DEFAULT_ZOOM } from "../../../shared/constants/mapConstants";
 
 export default function PolygonDrawMap({
   onGeoJsonChange = () => {},
   height = 300,
   centerLonLat,
-  zoom = 8.3,
+  zoom = DEFAULT_ZOOM,
 }) {
   const mapDivRef = useRef(null);
   const mapRef = useRef(null);
@@ -22,12 +23,12 @@ export default function PolygonDrawMap({
   const vectorSourceRef = useRef(new VectorSource());
   const drawRef = useRef(null);
 
-  // ✅ Stabilan default centar (ne pravi novi array na svaki render)
+  
   const stableCenter = useMemo(() => {
-    return Array.isArray(centerLonLat) ? centerLonLat : [17.8, 44.2];
+    return Array.isArray(centerLonLat) ? centerLonLat : DEFAULT_CENTER_LONLAT;
   }, [centerLonLat?.[0], centerLonLat?.[1]]);
 
-  // ✅ U većini slučajeva mapu želiš inicijalizovati samo jednom
+ 
   useEffect(() => {
     if (mapRef.current) return;
 
@@ -73,11 +74,9 @@ export default function PolygonDrawMap({
       mapRef.current = null;
       drawRef.current = null;
     };
-    // ⚠️ Namjerno NE zavisimo od stableCenter/zoom/onGeoJsonChange
-    // da ne bismo re-kreirali mapu na svaki render forme
   }, []);
 
-  // Ako baš želiš da centar/zoom mogu dinamički da se mijenjaju kad prop dođe spolja:
+  
   useEffect(() => {
     if (!mapRef.current) return;
     const view = mapRef.current.getView();
@@ -92,7 +91,7 @@ export default function PolygonDrawMap({
     return () => clearTimeout(t);
   }, []);
 
-  
+
  const clear = () => {
   vectorSourceRef.current.clear();
   onGeoJsonChange("");
