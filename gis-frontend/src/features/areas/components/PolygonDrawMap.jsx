@@ -7,8 +7,12 @@ import VectorLayer from "ol/layer/Vector";
 import OSM from "ol/source/OSM";
 import VectorSource from "ol/source/Vector";
 import { fromLonLat } from "ol/proj";
+
 import Draw from "ol/interaction/Draw";
+import Modify from "ol/interaction/Modify";
+import Snap from "ol/interaction/Snap";
 import DoubleClickZoom from "ol/interaction/DoubleClickZoom";
+
 import GeoJSON from "ol/format/GeoJSON";
 import Feature from "ol/Feature";
 
@@ -28,22 +32,93 @@ export default function PolygonDrawMap({
   const mapRef = useRef(null);
 
   const vectorSourceRef = useRef(new VectorSource());
+
   const drawRef = useRef(null);
+  const modifyRef = useRef(null);
+  const snapRef = useRef(null);
 
   const stableCenter = useMemo(() => {
     return Array.isArray(centerLonLat) ? centerLonLat : DEFAULT_CENTER_LONLAT;
   }, [centerLonLat?.[0], centerLonLat?.[1]]);
 
-  // helper: napravi i dodaj Draw interaction (fresh instance)
-  const attachFreshDraw = () => {
+  const writeCurrentFeatureToGeoJson = () => {
+    const feature = vectorSourceRef.current.getFeatures()?.[0];
+    if (!feature) {
+      onGeoJsonChange("");
+      return;
+    }
+
+    const format = new GeoJSON();
+    const geojsonObj = format.writeFeatureObject(feature, {
+      featureProjection: "EPSG:3857",
+      dataProjection: "EPSG:4326",
+    });
+
+    onGeoJsonChange(JSON.stringify(geojsonObj));
+  };
+
+  // ukloni modify/snap ako postoje
+  const detachModifyAndSnap = () => {
     const map = mapRef.current;
     if (!map) return;
 
-    // ukloni stari draw ako postoji
+    if (modifyRef.current) {
+      map.removeInteraction(modifyRef.current);
+      modifyRef.current = null;
+    }
+    if (snapRef.current) {
+      map.removeInteraction(snapRef.current);
+      snapRef.current = null;
+    }
+  };
+
+  // ukloni draw ako postoji
+  const detachDraw = () => {
+    const map = mapRef.current;
+    if (!map) return;
+
     if (drawRef.current) {
       map.removeInteraction(drawRef.current);
       drawRef.current = null;
     }
+  };
+
+  // uključi Modify (+ Snap) za postojeći poligon
+  const attachModifyAndSnap = () => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    // osiguraj da nema duplih
+    detachModifyAndSnap();
+
+    const modify = new Modify({
+      source: vectorSourceRef.current,
+    });
+
+    modify.on("modifyend", () => {
+      // nakon pomjeranja tačaka, ažuriraj GeoJSON u formi
+      writeCurrentFeatureToGeoJson();
+    });
+
+    const snap = new Snap({
+      source: vectorSourceRef.current,
+    });
+
+    map.addInteraction(modify);
+    map.addInteraction(snap);
+
+    modifyRef.current = modify;
+    snapRef.current = snap;
+  };
+
+  // fresh Draw instance (za novi poligon)
+  const attachFreshDraw = () => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    // kad crtamo novi, ne trebaju modify/snap
+    detachModifyAndSnap();
+    detachDraw();
 
     const draw = new Draw({
       source: vectorSourceRef.current,
@@ -51,30 +126,28 @@ export default function PolygonDrawMap({
     });
 
     draw.on("drawend", (e) => {
-      // dozvoljavamo samo 1 poligon
+      // samo 1 poligon
       vectorSourceRef.current.clear();
       vectorSourceRef.current.addFeature(e.feature);
 
-      const format = new GeoJSON();
-      const geojsonObj = format.writeFeatureObject(e.feature, {
-        featureProjection: "EPSG:3857",
-        dataProjection: "EPSG:4326",
-      });
+      // upiši GeoJSON odmah
+      writeCurrentFeatureToGeoJson();
 
-      onGeoJsonChange(JSON.stringify(geojsonObj));
-
-      // nakon završetka, ugasi crtanje
+      // ugasi crtanje
       draw.setActive(false);
+
+      // i uključi pomjeranje tačaka (modify)
+      attachModifyAndSnap();
     });
 
     map.addInteraction(draw);
     drawRef.current = draw;
 
-    // bitno: odmah aktiviraj da prvi klik radi
+    // bitno: prvi klik odmah radi
     draw.setActive(true);
   };
 
-  // 1) inicijalizacija mape (samo jednom)
+  // 1) init map
   useEffect(() => {
     if (mapRef.current) return;
 
@@ -90,27 +163,27 @@ export default function PolygonDrawMap({
       }),
     });
 
-    // ukloni DoubleClickZoom da double-click bude “završetak poligona”
+    // ukloni DoubleClickZoom da double-click bude završetak crtanja
     map.getInteractions().forEach((i) => {
-      if (i instanceof DoubleClickZoom) {
-        map.removeInteraction(i);
-      }
+      if (i instanceof DoubleClickZoom) map.removeInteraction(i);
     });
 
     mapRef.current = map;
 
-    // odmah dodaj draw (create mode, bez početnog poligona)
+    // default: omogućimo crtanje (ako nema initialGeoJson)
     attachFreshDraw();
 
     return () => {
       map.setTarget(null);
       mapRef.current = null;
       drawRef.current = null;
+      modifyRef.current = null;
+      snapRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 2) centar/zoom update (ako ti treba)
+  // 2) center/zoom update
   useEffect(() => {
     if (!mapRef.current) return;
     const view = mapRef.current.getView();
@@ -118,7 +191,7 @@ export default function PolygonDrawMap({
     view.setZoom(zoom);
   }, [stableCenter, zoom]);
 
-  // 3) updateSize (da mapa bude pravilno prikazana u modalu)
+  // 3) updateSize (modal)
   useEffect(() => {
     const t = setTimeout(() => {
       mapRef.current?.updateSize();
@@ -126,14 +199,14 @@ export default function PolygonDrawMap({
     return () => clearTimeout(t);
   }, []);
 
-  // 4) učitaj postojeći poligon (edit mode)
+  // 4) load existing polygon (edit)
   useEffect(() => {
     if (!mapRef.current) return;
 
-    // ako nema geojson-a → u create modu ostavi draw aktivan
     if (!initialGeoJson || !String(initialGeoJson).trim()) {
-      // osiguraj da crtanje radi odmah
-      if (drawRef.current) drawRef.current.setActive(true);
+      // nema poligona → crtanje
+      vectorSourceRef.current.clear();
+      attachFreshDraw();
       return;
     }
 
@@ -157,7 +230,6 @@ export default function PolygonDrawMap({
           featureProjection: "EPSG:3857",
         });
       } else {
-        // Geometry (Polygon/MultiPolygon/...)
         const geom = format.readGeometry(obj, { featureProjection: "EPSG:3857" });
         featureToAdd = new Feature({ geometry: geom });
       }
@@ -167,7 +239,7 @@ export default function PolygonDrawMap({
       vectorSourceRef.current.clear();
       vectorSourceRef.current.addFeature(featureToAdd);
 
-      // fit na poligon
+      // fit
       const extent = vectorSourceRef.current.getExtent();
       mapRef.current.getView().fit(extent, {
         padding: [40, 40, 40, 40],
@@ -175,20 +247,20 @@ export default function PolygonDrawMap({
         maxZoom: 16,
       });
 
-      // pošto već postoji poligon → ugasi crtanje
-      drawRef.current?.setActive(false);
+      // edit mode → nema crtanja, samo modify
+      detachDraw();
+      attachModifyAndSnap();
     } catch (err) {
       console.error("Greška pri učitavanju initialGeoJson:", err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialGeoJson]);
 
-  // Očisti poligon i “restartuj” draw da 1. klik odmah krene
   const clear = () => {
     vectorSourceRef.current.clear();
     onGeoJsonChange("");
 
-    // ključna stvar: fresh draw instance
+    // vrati u režim crtanja (prvi klik radi)
     attachFreshDraw();
   };
 
@@ -203,9 +275,7 @@ export default function PolygonDrawMap({
           Očisti poligon
         </button>
 
-        <div className="text-muted small d-flex align-items-center">
-          Klikni tačke za poligon, double-click za završetak.
-        </div>
+        
       </div>
 
       <div
