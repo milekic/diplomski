@@ -69,7 +69,9 @@ export default function AreaCreateForm({
         {/* Lijevo: forma */}
         <div className="col-12 col-lg-5">
           <div className="mb-2">
-            <label className="form-label">Naziv</label>
+            <label className="form-label">
+              Naziv <span className="text-danger">*</span>
+              </label>
             <input
               className={`form-control ${
                 touched.name && !nameValid ? "is-invalid" : ""
@@ -128,9 +130,6 @@ export default function AreaCreateForm({
             </label>
           </div>
 
-          <div className="small text-muted mt-2">
-            {geomGeoJson ? "Poligon je postavljen ✅" : "Nema poligona ❌"}
-          </div>
         </div>
 
         {/* Desno: mapa */}
@@ -146,11 +145,6 @@ export default function AreaCreateForm({
             }}
           />
 
-          {touched.geom && !geomValid && (
-            <div className="text-danger small mt-2">
-              Morate nacrtati poligon na mapi.
-            </div>
-          )}
         </div>
       </div>
 
