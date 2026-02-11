@@ -5,6 +5,8 @@ import { getMyAreas, deleteArea, createArea } from "../features/areas/components
 import usePagination from "../shared/hooks/usePagination";
 import ConfirmModal from "../shared/ui/ConfirmModal";
 import AreaCreateModal from "../features/areas/components/AreaCreateModal";
+import AreaEditModal from "../features/areas/components/AreaEditModal";
+
 
 
 
@@ -23,10 +25,8 @@ export default function AreasPage() {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-
-  
-
-
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   const {
     currentPage,
@@ -56,6 +56,11 @@ export default function AreasPage() {
   } finally {
     setLoading(false);
   }
+
+ 
+
+
+
 };
 
 
@@ -174,7 +179,13 @@ export default function AreasPage() {
                 setSuccess(null);
                 setShowCreateModal(true);
               }}
-              onEdit={(id) => console.log("Edit", id)}
+
+              onEdit={() => {
+                 setError(null);
+                 setSuccess(null);
+                 setShowEditModal(true);
+                }}
+
               onDelete={onAskDelete}
               onViewDetails={() => console.log("Pregled detalja")}
             />
@@ -207,6 +218,18 @@ export default function AreasPage() {
             onClose={() => !creating && setShowCreateModal(false)}
             onCreate={onCreateArea}
           />
+
+          {/*Izbrisati ispis na konzolu */}
+          <AreaEditModal
+            show={showEditModal}
+            area={selectedArea}
+            loading={editing}
+            onClose={() => !editing && setShowEditModal(false)}
+            onEdit={async (payload) => {
+            console.log("Edit payload:", payload);
+            }}
+          />
+
 
 
     </div>
