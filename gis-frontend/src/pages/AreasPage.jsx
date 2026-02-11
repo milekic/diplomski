@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import AreasTable from "../features/areas/components/AreasTable";
 import AreaDetailsPanel from "../features/areas/components/AreaDetailsPanel";
-import { getMyAreas, deleteArea, createArea } from "../features/areas/components/areasApi";
+import { getMyAreas, deleteArea, createArea, updateArea } from "../features/areas/components/areasApi";
 import usePagination from "../shared/hooks/usePagination";
 import ConfirmModal from "../shared/ui/ConfirmModal";
 import AreaCreateModal from "../features/areas/components/AreaCreateModal";
@@ -226,8 +226,24 @@ export default function AreasPage() {
             loading={editing}
             onClose={() => !editing && setShowEditModal(false)}
             onEdit={async (payload) => {
-            console.log("Edit payload:", payload);
+                try {
+                setEditing(true);
+                setError(null);
+                setSuccess(null);
+
+                await updateArea(selectedArea.id, payload);
+                await loadAreas();
+
+                setShowEditModal(false);
+                showSuccess("Oblast je uspješno izmijenjena ✅");
+                } catch (err) {
+                setError("Došlo je do greške pri izmjeni oblasti.");
+                throw err;
+                } finally {
+                 setEditing(false);
+                }
             }}
+
           />
 
 

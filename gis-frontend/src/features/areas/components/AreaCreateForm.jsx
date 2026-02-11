@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import PolygonDrawMap from "./PolygonDrawMap";
 
 export default function AreaCreateForm({
   onSubmit = async () => {},
   onCancel = () => {},
   loading = false,
+  initialData = null,
+  isEditMode = false,
 }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -22,8 +24,17 @@ export default function AreaCreateForm({
 
   const nameValid = name.trim().length > 0;
   const geomValid = geomGeoJson.trim().length > 0;
-
   const isFormValid = nameValid && geomValid;
+
+  useEffect(() => {
+    if (initialData) {
+      setName(initialData.name ?? "");
+      setDescription(initialData.description ?? "");
+      setIsGlobal(initialData.isGlobal ?? false);
+      setIsMonitored(initialData.isMonitored ?? true);
+      setGeomGeoJson(initialData.geomGeoJson ?? "");
+    }
+  }, [initialData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -126,6 +137,7 @@ export default function AreaCreateForm({
         <div className="col-12 col-lg-7">
           <PolygonDrawMap
             height={320}
+            initialGeoJson={geomGeoJson}
             onGeoJsonChange={(value) => {
               setGeomGeoJson(value);
               if (!touched.geom) {
