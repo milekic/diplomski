@@ -53,7 +53,7 @@ export default function AreaEditModal({
               />
             </div>
 
-            {/* KLJUČNO: flex:1 + overflow hidden */}
+            
             <div className="modal-body" style={{ flex: 1, overflow: "hidden" }}>
               <AreaCreateForm
                 loading={loading}

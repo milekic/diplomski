@@ -65,11 +65,11 @@ export default function AreaCreateForm({
       </div>
     )}
 
-    {/* KLJUČNO: ovaj dio raste */}
+    
     <div className="row g-3 flex-grow-1" style={{ minHeight: 0 }}>
       {/* Lijevo: forma */}
       <div className="col-12 col-lg-5">
-        {/* ... tvoj postojeći kod lijevo ostaje isti ... */}
+
 
         <div className="mb-2">
           <label className="form-label">
@@ -131,7 +131,7 @@ export default function AreaCreateForm({
         </div>
       </div>
 
-      {/* Desno: mapa - KLJUČNO: flex i minHeight:0 */}
+      {/* Desno: mapa  */}
       <div className="col-12 col-lg-7 d-flex flex-column" style={{ minHeight: 0 }}>
         <PolygonDrawMap
           height="100%"  // umjesto 320
@@ -144,7 +144,7 @@ export default function AreaCreateForm({
       </div>
     </div>
 
-    {/* Footer dugmad ostaju dole */}
+    
     <div className="d-flex justify-content-end gap-2 mt-3">
       <button
         type="button"

@@ -71,6 +71,10 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<IAreaRepository, AreaRepository>();
 builder.Services.AddScoped<IAreaService, AreaService>();
 
+builder.Services.AddScoped<IAreaMonitorRepository, AreaMonitorRepository>();
+builder.Services.AddScoped<IAreaMonitorService, AreaMonitorService>();
+
+
 //za staticke podatke
 builder.Services.Configure<SpatialOptions>(
     builder.Configuration.GetSection("Spatial")
@@ -83,8 +87,31 @@ builder.Services.Configure<SpatialOptions>(
 var app = builder.Build();
 
 // global error handler 
-app.UseExceptionHandler("/error");
-app.Map("/error", () => Results.Problem("Došlo je do greške."));
+//app.UseExceptionHandler("/error");
+//app.Map("/error", () => Results.Problem("Došlo je do greške."));
+
+//ispis gresaka, samo za razvoj
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        var exceptionFeature = context.Features.Get<
+            Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+
+        var exception = exceptionFeature?.Error;
+
+        context.Response.StatusCode = 500;
+        context.Response.ContentType = "application/json";
+
+        await context.Response.WriteAsJsonAsync(new
+        {
+            message = exception?.Message,
+            inner = exception?.InnerException?.Message,
+            stackTrace = exception?.StackTrace
+        });
+    });
+});
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

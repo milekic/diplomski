@@ -113,17 +113,17 @@ export default function PolygonDrawMap({
       type: "Polygon",
     });
 
-    // čim krene novo crtanje -> obriši stari poligon
+    
     draw.on("drawstart", () => {
       vectorSourceRef.current.clear();
       onGeoJsonChange("");
     });
 
-    // kad završi (dvoklik) -> snimi geojson + pređi na modify
+    
     draw.on("drawend", (e) => {
       writeFeatureToGeoJson(e.feature);
 
-      // zaustavi dalje crtanje, prebaci na edit moda
+     
       draw.setActive(false);
       attachModifyAndSnap();
     });
@@ -134,7 +134,7 @@ export default function PolygonDrawMap({
     draw.setActive(true);
   };
 
-  // 1) init map (samo jednom)
+  
   useEffect(() => {
     if (mapRef.current) return;
 
@@ -156,7 +156,7 @@ export default function PolygonDrawMap({
 
     mapRef.current = map;
 
-    // po defaultu: draw mode
+    
     attachFreshDraw();
 
     return () => {
@@ -166,10 +166,9 @@ export default function PolygonDrawMap({
       modifyRef.current = null;
       snapRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 2) update center/zoom
+  
   useEffect(() => {
     if (!mapRef.current) return;
     const view = mapRef.current.getView();
@@ -177,11 +176,11 @@ export default function PolygonDrawMap({
     view.setZoom(zoom);
   }, [stableCenter, zoom]);
 
-  // 3) automatski updateSize kad se container promijeni (modal resize / col resize)
+  
   useEffect(() => {
     if (!mapRef.current || !mapDivRef.current) return;
 
-    // odmah jednom (poslije mount-a)
+    
     setTimeout(() => mapRef.current?.updateSize(), 0);
 
     const ro = new ResizeObserver(() => {
@@ -193,7 +192,7 @@ export default function PolygonDrawMap({
     return () => ro.disconnect();
   }, []);
 
-  // 4) učitaj postojeći poligon (edit mode)
+  
   useEffect(() => {
     if (!mapRef.current) return;
 

@@ -41,7 +41,7 @@ export default function AreaCreateModal({
               />
             </div>
 
-            {/* KLJUČNO: flex:1 da form može da “raste” */}
+          
             <div className="modal-body" style={{ flex: 1, overflow: "hidden" }}>
               <AreaCreateForm loading={loading} onCancel={onClose} onSubmit={onCreate} />
             </div>
