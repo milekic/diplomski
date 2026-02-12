@@ -18,3 +18,9 @@ export const createArea = async (payload) => {
   const response = await apiClient.post("/areas", payload);
   return response.data;
 };
+
+// Update postojeće oblasti
+export const updateArea = async (id, payload) => {
+  const response = await apiClient.put(`/areas/${id}`, payload);
+  return response.data;
+};

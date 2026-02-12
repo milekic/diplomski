@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import PolygonDrawMap from "./PolygonDrawMap";
 
 export default function AreaCreateForm({
   onSubmit = async () => {},
   onCancel = () => {},
   loading = false,
+  initialData = null,
+  isEditMode = false,
 }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -13,15 +15,34 @@ export default function AreaCreateForm({
 
   const [geomGeoJson, setGeomGeoJson] = useState("");
   const [error, setError] = useState(null);
-  
 
+  const [touched, setTouched] = useState({
+    name: false,
+    geom: false,
+  });
+
+
+  const nameValid = name.trim().length > 0;
+  const geomValid = geomGeoJson.trim().length > 0;
+  const isFormValid = nameValid && geomValid;
+
+  useEffect(() => {
+    if (initialData) {
+      setName(initialData.name ?? "");
+      setDescription(initialData.description ?? "");
+      setIsGlobal(initialData.isGlobal ?? false);
+      setIsMonitored(initialData.isMonitored ?? true);
+      setGeomGeoJson(initialData.geomGeoJson ?? "");
+    }
+  }, [initialData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
 
-    if (!name.trim()) return setError("Naziv je obavezan.");
-    if (!geomGeoJson.trim()) return setError("Morate nacrtati poligon na mapi.");
+    setTouched((t) => ({ ...t, name: true, geom: true }));
+
+    if (!isFormValid) return;
 
     try {
       await onSubmit({
@@ -48,15 +69,24 @@ export default function AreaCreateForm({
         {/* Lijevo: forma */}
         <div className="col-12 col-lg-5">
           <div className="mb-2">
-            <label className="form-label">Naziv</label>
+            <label className="form-label">
+              Naziv <span className="text-danger">*</span>
+              </label>
             <input
-              className="form-control"
+              className={`form-control ${
+                touched.name && !nameValid ? "is-invalid" : ""
+              }`}
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onBlur={() => setTouched((t) => ({ ...t, name: true }))}
               maxLength={150}
-              placeholder="npr. Kritična zona - Vrbas"
+              placeholder="npr. Krajina"
               disabled={loading}
             />
+
+            {touched.name && !nameValid && (
+              <div className="invalid-feedback">Naziv je obavezan.</div>
+            )}
           </div>
 
           <div className="mb-2">
@@ -96,21 +126,25 @@ export default function AreaCreateForm({
               disabled={loading}
             />
             <label className="form-check-label" htmlFor="isMonitored">
-              Praćenje uključeno
+              Oblast je podrazumjvano vidljiva
             </label>
           </div>
 
-          <div className="small text-muted mt-2">
-            {geomGeoJson ? "Poligon je postavljen ✅" : "Nema poligona ❌"}
-          </div>
         </div>
 
         {/* Desno: mapa */}
         <div className="col-12 col-lg-7">
           <PolygonDrawMap
             height={320}
-            onGeoJsonChange={setGeomGeoJson}
+            initialGeoJson={geomGeoJson}
+            onGeoJsonChange={(value) => {
+              setGeomGeoJson(value);
+              if (!touched.geom) {
+                setTouched((t) => ({ ...t, geom: true }));
+              }
+            }}
           />
+
         </div>
       </div>
 
@@ -127,7 +161,7 @@ export default function AreaCreateForm({
         <button
           type="submit"
           className="btn btn-success"
-          disabled={loading}
+          disabled={loading || !isFormValid}
         >
           {loading ? "Čuvanje..." : "Sačuvaj"}
         </button>

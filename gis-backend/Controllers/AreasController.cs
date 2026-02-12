@@ -3,7 +3,6 @@ using gis_backend.DTOs.Areas;
 using gis_backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using gis_backend.DTOs.Areas;
 
 namespace gis_backend.Controllers
 {
@@ -24,12 +23,13 @@ namespace gis_backend.Controllers
             var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
                        ?? User.FindFirst("id")?.Value;
 
-            if (string.IsNullOrWhiteSpace(idClaim))
-                throw new UnauthorizedAccessException("Nedostaje user id u tokenu.");
+            if (!int.TryParse(idClaim, out var userId))
+                throw new UnauthorizedAccessException();
 
-            return int.Parse(idClaim);
+            return userId;
         }
 
+        // GET: api/areas/my
         [HttpGet("my")]
         public async Task<ActionResult<List<AreaListItemDto>>> GetMyAreas()
         {
@@ -47,15 +47,15 @@ namespace gis_backend.Controllers
             try
             {
                 var result = await _service.SoftDeleteAsync(id, userId);
-                return Ok(result); 
+                return Ok(result);
             }
-            catch (KeyNotFoundException ex)
+            catch (KeyNotFoundException)
             {
-                return NotFound(new { message = ex.Message });
+                return NotFound(new { message = "Tražena oblast nije pronađena." });
             }
         }
 
-        //create
+        // POST: api/areas
         [HttpPost]
         public async Task<ActionResult<AreaListItemDto>> Create([FromBody] AreaCreateRequestDto request)
         {
@@ -66,14 +66,13 @@ namespace gis_backend.Controllers
                 var created = await _service.CreateAsync(request, userId);
                 return CreatedAtAction(nameof(GetMyAreas), new { }, created);
             }
-            catch (ArgumentException ex)
+            catch (ArgumentException)
             {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(new { message = "Neispravni podaci za kreiranje oblasti." });
             }
         }
 
-
-        //update
+        // PUT: api/areas/5
         [HttpPut("{id:int}")]
         public async Task<ActionResult<AreaListItemDto>> Update(int id, [FromBody] AreaUpdateRequestDto request)
         {
@@ -84,21 +83,18 @@ namespace gis_backend.Controllers
                 var updated = await _service.UpdateAsync(id, request, userId);
                 return Ok(updated);
             }
-            catch (KeyNotFoundException ex)
+            catch (KeyNotFoundException)
             {
-                return NotFound(new { message = ex.Message });
+                return NotFound(new { message = "Tražena oblast nije pronađena." });
             }
-            catch (ArgumentException ex)
+            catch (ArgumentException)
             {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(new { message = "Neispravni podaci za izmjenu oblasti." });
             }
-            catch (InvalidOperationException ex)
+            catch (InvalidOperationException)
             {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(new { message = "Operacija nad oblašću nije dozvoljena." });
             }
         }
-
-
-
     }
 }

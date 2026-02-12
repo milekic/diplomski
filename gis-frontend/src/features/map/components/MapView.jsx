@@ -1,11 +1,10 @@
 import { useEffect, useRef } from "react";
-
-
 import Map from "ol/Map";
 import View from "ol/View";
 import TileLayer from "ol/layer/Tile";
 import OSM from "ol/source/OSM";
 import { fromLonLat } from "ol/proj";   
+import { DEFAULT_CENTER_LONLAT,DEFAULT_ZOOM } from "../../../shared/constants/mapConstants";
 
 
 
@@ -24,8 +23,8 @@ export default function MapView() {
         }),
       ],
       view: new View({
-        center: fromLonLat ([17.8, 44.2]),
-        zoom: 8.3,
+        center: fromLonLat (DEFAULT_CENTER_LONLAT),
+        zoom: DEFAULT_ZOOM,
       }),
     });
 
