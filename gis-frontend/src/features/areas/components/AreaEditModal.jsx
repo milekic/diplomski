@@ -11,11 +11,13 @@ export default function AreaEditModal({
 
   return (
     <>
+      {/* Backdrop */}
       <div
         className="modal-backdrop fade show"
         onClick={() => !loading && onClose()}
       />
 
+      {/* Modal */}
       <div
         className="modal fade show"
         tabIndex="-1"
@@ -23,12 +25,26 @@ export default function AreaEditModal({
         style={{ display: "block" }}
         aria-modal="true"
       >
-        <div className="modal-dialog modal-xl modal-dialog-centered">
-          <div className="modal-content">
+        <div
+          className="modal-dialog modal-dialog-centered"
+          role="document"
+          style={{
+            maxWidth: "90vw",
+            width: "90vw",
+            height: "90vh",
+            margin: "auto",
+          }}
+        >
+          <div
+            className="modal-content"
+            style={{
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
             <div className="modal-header">
-              <h5 className="modal-title">
-                Izmjena oblasti: {area.name}
-              </h5>
+              <h5 className="modal-title">Izmjena oblasti: {area.name}</h5>
               <button
                 type="button"
                 className="btn-close"
@@ -37,12 +53,13 @@ export default function AreaEditModal({
               />
             </div>
 
-            <div className="modal-body">
+            {/* KLJUČNO: flex:1 + overflow hidden */}
+            <div className="modal-body" style={{ flex: 1, overflow: "hidden" }}>
               <AreaCreateForm
                 loading={loading}
                 onCancel={onClose}
                 onSubmit={onEdit}
-                initialData={area}  
+                initialData={area}
                 isEditMode={true}
               />
             </div>
