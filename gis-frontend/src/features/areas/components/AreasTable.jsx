@@ -7,6 +7,7 @@ export default function AreasTable({
   totalPages = 1,
   onPrev = () => {},
   onNext = () => {},
+  onGoToPage = () => {},
 
   onSelect = () => {},
   onAdd = () => {},
@@ -16,9 +17,11 @@ export default function AreasTable({
 }) {
   return (
     <div className="d-flex flex-column h-100">
-      {/* Toolbar */}
-<div className="d-flex align-items-center justify-content-between mb-2">
+      
+{/* Toolbar */}
+<div className="d-flex align-items-center justify-content-end mb-2">
   <div className="d-flex align-items-center gap-2">
+
     <button
       type="button"
       className="btn btn-outline-secondary btn-sm"
@@ -48,23 +51,23 @@ export default function AreasTable({
       disabled={!selectedId}
       title="Obriši"
       aria-label="Obriši"
-      >
+    >
       <i className="bi bi-trash" />
     </button>
 
+    <button
+      type="button"
+      className="btn btn-success btn-sm"
+      onClick={onAdd}
+      title="Dodaj oblast"
+      aria-label="Dodaj oblast"
+    >
+      <i className="bi bi-plus-lg" />
+    </button>
 
   </div>
-
-  <button
-    type="button"
-    className="btn btn-success btn-sm"
-    onClick={onAdd}
-    title="Dodaj oblast"
-    aria-label="Dodaj oblast"
-  >
-    <i className="bi bi-plus-lg me-0" />
-  </button>
 </div>
+
 
 
       {/* Table container */}
@@ -134,9 +137,19 @@ export default function AreasTable({
                   key={page}
                   className={`page-item ${page === currentPage ? "active" : ""}`}
                 >
-                  <span className="page-link">{page}</span>
+                  <button
+                    type="button"
+                    className="page-link"
+                    onClick={() => onGoToPage(page)}
+                    disabled={page === currentPage}
+                    aria-label={`Idi na stranicu ${page}`}
+                    title={`Idi na stranicu ${page}`}
+                  >
+                    {page}
+                  </button>
                 </li>
               ))}
+
 
               {/* Next */}
               <li

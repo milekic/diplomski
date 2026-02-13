@@ -58,114 +58,113 @@ export default function AreaCreateForm({
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      {error && (
-        <div className="alert alert-danger py-2" role="alert">
-          {error}
-        </div>
-      )}
+  <form onSubmit={handleSubmit} style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+    {error && (
+      <div className="alert alert-danger py-2" role="alert">
+        {error}
+      </div>
+    )}
 
-      <div className="row g-3">
-        {/* Lijevo: forma */}
-        <div className="col-12 col-lg-5">
-          <div className="mb-2">
-            <label className="form-label">
-              Naziv <span className="text-danger">*</span>
-              </label>
-            <input
-              className={`form-control ${
-                touched.name && !nameValid ? "is-invalid" : ""
-              }`}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onBlur={() => setTouched((t) => ({ ...t, name: true }))}
-              maxLength={150}
-              placeholder="npr. Krajina"
-              disabled={loading}
-            />
+    
+    <div className="row g-3 flex-grow-1" style={{ minHeight: 0 }}>
+      {/* Lijevo: forma */}
+      <div className="col-12 col-lg-5">
 
-            {touched.name && !nameValid && (
-              <div className="invalid-feedback">Naziv je obavezan.</div>
-            )}
-          </div>
 
-          <div className="mb-2">
-            <label className="form-label">Opis</label>
-            <textarea
-              className="form-control"
-              rows={3}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              maxLength={1000}
-              placeholder="Opcionalno..."
-              disabled={loading}
-            />
-          </div>
-
-          <div className="form-check mb-2">
-            <input
-              id="isGlobal"
-              className="form-check-input"
-              type="checkbox"
-              checked={isGlobal}
-              onChange={(e) => setIsGlobal(e.target.checked)}
-              disabled={loading}
-            />
-            <label className="form-check-label" htmlFor="isGlobal">
-              Globalna oblast (vidljiva drugim korisnicima)
-            </label>
-          </div>
-
-          <div className="form-check mb-2">
-            <input
-              id="isMonitored"
-              className="form-check-input"
-              type="checkbox"
-              checked={isMonitored}
-              onChange={(e) => setIsMonitored(e.target.checked)}
-              disabled={loading}
-            />
-            <label className="form-check-label" htmlFor="isMonitored">
-              Oblast je podrazumjvano vidljiva
-            </label>
-          </div>
-
-        </div>
-
-        {/* Desno: mapa */}
-        <div className="col-12 col-lg-7">
-          <PolygonDrawMap
-            height={320}
-            initialGeoJson={geomGeoJson}
-            onGeoJsonChange={(value) => {
-              setGeomGeoJson(value);
-              if (!touched.geom) {
-                setTouched((t) => ({ ...t, geom: true }));
-              }
-            }}
+        <div className="mb-2">
+          <label className="form-label">
+            Naziv <span className="text-danger">*</span>
+          </label>
+          <input
+            className={`form-control ${touched.name && !nameValid ? "is-invalid" : ""}`}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onBlur={() => setTouched((t) => ({ ...t, name: true }))}
+            maxLength={150}
+            placeholder="npr. Krajina"
+            disabled={loading}
           />
+          {touched.name && !nameValid && (
+            <div className="invalid-feedback">Naziv je obavezan.</div>
+          )}
+        </div>
 
+        <div className="mb-2">
+          <label className="form-label">Opis</label>
+          <textarea
+            className="form-control"
+            rows={3}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            maxLength={1000}
+            placeholder="Opcionalno..."
+            disabled={loading}
+          />
+        </div>
+
+        <div className="form-check mb-2">
+          <input
+            id="isGlobal"
+            className="form-check-input"
+            type="checkbox"
+            checked={isGlobal}
+            onChange={(e) => setIsGlobal(e.target.checked)}
+            disabled={loading}
+          />
+          <label className="form-check-label" htmlFor="isGlobal">
+            Globalna oblast (vidljiva drugim korisnicima)
+          </label>
+        </div>
+
+        <div className="form-check mb-2">
+          <input
+            id="isMonitored"
+            className="form-check-input"
+            type="checkbox"
+            checked={isMonitored}
+            onChange={(e) => setIsMonitored(e.target.checked)}
+            disabled={loading}
+          />
+          <label className="form-check-label" htmlFor="isMonitored">
+            Oblast je podrazumjvano vidljiva
+          </label>
         </div>
       </div>
 
-      <div className="d-flex justify-content-end gap-2 mt-3">
-        <button
-          type="button"
-          className="btn btn-outline-secondary"
-          onClick={onCancel}
-          disabled={loading}
-        >
-          Otkaži
-        </button>
-
-        <button
-          type="submit"
-          className="btn btn-success"
-          disabled={loading || !isFormValid}
-        >
-          {loading ? "Čuvanje..." : "Sačuvaj"}
-        </button>
+      {/* Desno: mapa  */}
+      <div className="col-12 col-lg-7 d-flex flex-column" style={{ minHeight: 0 }}>
+        <PolygonDrawMap
+          height="100%"  // umjesto 320
+          initialGeoJson={geomGeoJson}
+          onGeoJsonChange={(value) => {
+            setGeomGeoJson(value);
+            if (!touched.geom) setTouched((t) => ({ ...t, geom: true }));
+          }}
+        />
       </div>
-    </form>
-  );
+    </div>
+
+    
+    <div className="d-flex justify-content-end gap-2 mt-3">
+      <button
+        type="button"
+        className="btn btn-outline-secondary"
+        onClick={onCancel}
+        disabled={loading}
+      >
+        Otkaži
+      </button>
+
+      <button
+        type="submit"
+        className="btn btn-success"
+        disabled={loading || !isFormValid}
+      >
+        {loading ? "Čuvanje..." : "Sačuvaj"}
+      </button>
+    </div>
+  </form>
+);
+
+
 }

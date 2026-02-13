@@ -6,15 +6,14 @@ import usePagination from "../shared/hooks/usePagination";
 import ConfirmModal from "../shared/ui/ConfirmModal";
 import AreaCreateModal from "../features/areas/components/AreaCreateModal";
 import AreaEditModal from "../features/areas/components/AreaEditModal";
-
+import { DEFAULT_PAGE_SIZE } from "../shared/constants/mapConstants";
 
 
 
 
 
 export default function AreasPage() {
-  const PAGE_SIZE = 10;
-
+  
   const [areas, setAreas] = useState([]);
   const [selectedArea, setSelectedArea] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -36,7 +35,7 @@ export default function AreasPage() {
     prev,
     reset,
     setCurrentPage,
-  } = usePagination(areas, PAGE_SIZE);
+  } = usePagination(areas, DEFAULT_PAGE_SIZE);
 
   useEffect(() => {
     loadAreas();
@@ -87,7 +86,7 @@ export default function AreasPage() {
       const nextAreas = areas.filter((a) => a.id !== selectedArea.id);
       setAreas(nextAreas);
 
-      const newTotalPages = Math.max(1, Math.ceil(nextAreas.length / PAGE_SIZE));
+      const newTotalPages = Math.max(1, Math.ceil(nextAreas.length / DEFAULT_PAGE_SIZE));
 
       if (currentPage > newTotalPages) {
         setCurrentPage(newTotalPages);
@@ -173,6 +172,10 @@ export default function AreasPage() {
                 next();
                 setSelectedArea(null);
               }}
+                onGoToPage={(page) => {      
+                setCurrentPage(page);
+                setSelectedArea(null);
+              }}
               onSelect={setSelectedArea}
               onAdd={() =>{ 
                 setError(null);
@@ -219,7 +222,7 @@ export default function AreasPage() {
             onCreate={onCreateArea}
           />
 
-          {/*Izbrisati ispis na konzolu */}
+          
           <AreaEditModal
             show={showEditModal}
             area={selectedArea}
