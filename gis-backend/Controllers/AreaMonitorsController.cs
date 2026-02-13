@@ -24,7 +24,7 @@ namespace gis_backend.Controllers
             try
             {
                 await _service.CreateAsync(request);
-                return Ok(new { message = "Praćenje je uspješno kreirano." });
+                return Ok(new { message = "Nova oblast se uspješno prati." });
             }
             catch (ArgumentException ex)
             {
@@ -39,7 +39,7 @@ namespace gis_backend.Controllers
             try
             {
                 await _service.UpdateAsync(id, request);
-                return Ok(new { message = "Praćenje je uspješno ažurirano." });
+                return Ok(new { message = "Praćenje oblasti je uspješno ažurirano." });
             }
             catch (KeyNotFoundException)
             {
