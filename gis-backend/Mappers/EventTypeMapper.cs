@@ -12,7 +12,9 @@ namespace gis_backend.Mappers
                 Id = eventType.Id,
                 Name = eventType.Name,
                 Unit = eventType.Unit,
-                Description= eventType.Description
+                Description= eventType.Description,
+                MinThreshold = eventType.MinThreshold,
+                MaxThreshold = eventType.MaxThreshold
             };
         }
     }

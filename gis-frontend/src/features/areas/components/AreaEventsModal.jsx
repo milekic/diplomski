@@ -60,41 +60,57 @@ useEffect(() => {
   };
 }, [show, area?.id]);
 
+const eventTypeById = Object.fromEntries(
+  (eventTypes ?? []).map((et) => [et.id, et])
+);
+
 
   // Validacija
-  const validate = (selected) => {
-    const newErrors = {};
+const validate = (selected) => {
+  const newErrors = {};
 
-    for (const [idStr, value] of Object.entries(selected)) {
-      const id = Number(idStr);
-      const trimmed = String(value).trim();
+  for (const [idStr, value] of Object.entries(selected)) {
+    const id = Number(idStr);
+    const trimmed = String(value).trim();
 
-      if (trimmed === "") {
-        newErrors[id] = "Unesite kritični prag.";
-        continue;
-      }
+    const et = eventTypeById[id]; 
 
-      const num = Number(trimmed);
-
-      if (Number.isNaN(num)) {
-        newErrors[id] = "Prag mora biti broj.";
-        continue;
-      }
-
-      if (num <= 0) {
-        newErrors[id] = "Prag mora biti veći od 0.";
-      }
+    if (trimmed === "") {
+      newErrors[id] = "Unesite kritični prag.";
+      continue;
     }
 
-    return newErrors;
-  };
+    const num = Number(trimmed);
 
-  // Automatska validacija kad se nešto promijeni
-  useEffect(() => {
-    setErrors(validate(selectedEvents));
-  }, [selectedEvents]);
+    if (!Number.isFinite(num)) {
+      newErrors[id] = "Prag mora biti broj.";
+      continue;
+    }
 
-  // Da li je forma validna
+    
+
+    if (et?.minThreshold != null && num < et.minThreshold) {
+      newErrors[id] = `Minimalan dozvoljeni prag: ${et.minThreshold} ${et.unit ?? ""}`.trim();
+      continue;
+    }
+
+    if (et?.maxThreshold != null && num > et.maxThreshold) {
+      newErrors[id] = `Maksimalan dozvoljeni prag: ${et.maxThreshold} ${et.unit ?? ""}`.trim();
+      continue;
+    }
+  }
+
+  return newErrors;
+};
+
+
+  
+useEffect(() => {
+  setErrors(validate(selectedEvents));
+}, [selectedEvents, eventTypes]);
+
+
+  
   const isValid =
     Object.keys(selectedEvents).length > 0 &&
     Object.keys(errors).length === 0;
@@ -216,6 +232,7 @@ useEffect(() => {
                                 <span className="input-group-text" style={{ width: 70, justifyContent: "center" }}>
                                   {et.unit}
                                 </span>
+
                                 <input
                                   type="number"
                                   className="form-control"
@@ -228,6 +245,7 @@ useEffect(() => {
                                 />
                               </div>
                             </div>
+
 
 
                           </div>

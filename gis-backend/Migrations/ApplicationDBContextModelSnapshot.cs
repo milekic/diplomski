@@ -113,6 +113,12 @@ namespace gis_backend.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<double?>("MaxThreshold")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("MinThreshold")
+                        .HasColumnType("double precision");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(150)

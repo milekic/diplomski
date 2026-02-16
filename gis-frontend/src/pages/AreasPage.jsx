@@ -77,7 +77,7 @@ export default function AreasPage() {
 
   const showSuccess = (msg) => {
   setSuccess(msg);
-  setTimeout(() => setSuccess(null), 3000);
+  setTimeout(() => setSuccess(null), 1000);
  };
 
 

@@ -8,5 +8,7 @@
 
         public string Unit { get; set; } = string.Empty;
         public string? Description { get; set; }
+        public double? MinThreshold { get; set; }
+        public double? MaxThreshold { get; set; }
     }
 }
