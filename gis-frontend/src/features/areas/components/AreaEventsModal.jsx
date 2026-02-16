@@ -211,27 +211,25 @@ useEffect(() => {
                             </div>
 
                             {/* Threshold input */}
-                            <div className="d-flex align-items-center gap-2">
-                              <input
-                                type="number"
-                                className="form-control"
-                                style={{ width: 150 }}
-                                placeholder="Kritični prag"
-                                disabled={!isChecked}
-                                value={
-                                  selectedEvents[et.id] ?? ""
-                                }
-                                onChange={(e) =>
-                                  handleThresholdChange(
-                                    et.id,
-                                    e.target.value
-                                  )
-                                }
-                              />
-                              <span className="text-muted">
-                                {et.unit}
-                              </span>
+                            <div style={{ width: 200 }}>
+                              <div className="input-group">
+                                <span className="input-group-text" style={{ width: 70, justifyContent: "center" }}>
+                                  {et.unit}
+                                </span>
+                                <input
+                                  type="number"
+                                  className="form-control"
+                                  placeholder="Kritični prag"
+                                  disabled={!isChecked}
+                                  value={selectedEvents[et.id] ?? ""}
+                                  onChange={(e) =>
+                                    handleThresholdChange(et.id, e.target.value)
+                                  }
+                                />
+                              </div>
                             </div>
+
+
                           </div>
 
                           {/* Error poruka */}
