@@ -59,5 +59,16 @@ namespace gis_backend.Controllers
                 return BadRequest(new { message = "Neispravni podaci za izmjenu praćenja." });
             }
         }
+
+        //sinhronization pattern (za check listu)
+        [HttpPut("area/{areaId:int}/sync")]
+        public async Task<IActionResult> SyncForArea(int areaId, [FromBody] AreaMonitorSyncRequestDto request)
+        {
+            await _service.SyncForAreaAsync(areaId, request.Selected);
+            return Ok(new { message = "Praćenja su uspješno ažurirana." });
+        }
+
+
+
     }
 }

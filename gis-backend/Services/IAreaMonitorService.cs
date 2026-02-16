@@ -9,5 +9,9 @@ namespace gis_backend.Services
         Task UpdateAsync(int id, AreaMonitorUpdateDto request);
         Task<List<AreaMonitorActiveForAreaDto>> GetActiveByAreaIdAsync(int areaId);
 
+        //sinhronization pattern
+        Task SyncForAreaAsync(int areaId, Dictionary<int, double?> selected);
+
+
     }
 }

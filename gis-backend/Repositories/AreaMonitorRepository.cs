@@ -43,5 +43,13 @@ namespace gis_backend.Repositories
                 .ToListAsync();
         }
 
+        public Task<List<AreaMonitor>> GetActiveEntitiesByAreaIdAsync(int areaId)
+        {
+            return _context.AreaMonitors
+                .Where(x => x.AreaId == areaId && x.ActiveTo == null)
+                .ToListAsync();
+        }
+
+
     }
 }

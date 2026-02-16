@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { getEventTypes } from "./eventTypesApi";
+import { getActiveAreaMonitorsByAreaId } from "./areaMonitorsApi";
+
 
 export default function AreaEventsModal({
   show = false,
@@ -18,25 +20,46 @@ export default function AreaEventsModal({
   // Validacione greške
   const [errors, setErrors] = useState({});
 
-  // Učitaj EventTypes kad se modal otvori
-  useEffect(() => {
-    if (!show) return;
+  
+useEffect(() => {
+  if (!show || !area) return;
 
-    const load = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await getEventTypes();
-        setEventTypes(data ?? []);
-      } catch {
-        setError("Ne mogu učitati tipove događaja.");
-      } finally {
-        setLoading(false);
+  let cancelled = false;
+
+  const load = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const [types, active] = await Promise.all([
+        getEventTypes(),
+        getActiveAreaMonitorsByAreaId(area.id),
+      ]);
+
+      if (cancelled) return;
+
+      setEventTypes(types ?? []);
+
+      const preselected = {};
+      for (const m of active ?? []) {
+        preselected[m.eventTypeId] = String(m.threshold ?? "");
       }
-    };
 
-    load();
-  }, [show]);
+      setSelectedEvents(preselected);
+    } catch (e) {
+      if (!cancelled) setError("Ne mogu učitati događaje/praćenja.");
+    } finally {
+      if (!cancelled) setLoading(false);
+    }
+  };
+
+  load();
+
+  return () => {
+    cancelled = true;
+  };
+}, [show, area?.id]);
+
 
   // Validacija
   const validate = (selected) => {
@@ -76,20 +99,30 @@ export default function AreaEventsModal({
     Object.keys(selectedEvents).length > 0 &&
     Object.keys(errors).length === 0;
 
-  // Checkbox toggle
-  const toggleEvent = (id) => {
-    setSelectedEvents((prev) => {
-      const copy = { ...prev };
 
-      if (copy[id]) {
-        delete copy[id];
-      } else {
-        copy[id] = "";
-      }
+ const toggleEvent = (id) => {
+  setSelectedEvents((prev) => {
+    const copy = { ...prev };
 
-      return copy;
-    });
-  };
+    if (Object.prototype.hasOwnProperty.call(copy, id)) {
+      delete copy[id];           
+    } else {
+      copy[id] = "";             
+    }
+
+    return copy;
+  });
+};
+
+
+  useEffect(() => {
+  if (!show) {
+    setSelectedEvents({});
+    setErrors({});
+    setError(null);
+  }
+}, [show]);
+
 
   // Promjena praga
   const handleThresholdChange = (id, value) => {
@@ -151,7 +184,7 @@ export default function AreaEventsModal({
                   <div className="d-flex flex-column gap-3">
                     {eventTypes.map((et) => {
                       const isChecked =
-                        selectedEvents.hasOwnProperty(et.id);
+                        Object.prototype.hasOwnProperty.call(selectedEvents, et.id)
 
                       return (
                         <div

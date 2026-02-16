@@ -13,6 +13,10 @@ namespace gis_backend.Repositories
         
         Task<List<AreaMonitorActiveForAreaDto>> GetActiveByAreaIdAsync(int areaId);
 
+        //za sinhronization pattern
+        Task<List<AreaMonitor>> GetActiveEntitiesByAreaIdAsync(int areaId);
+
+
 
     }
 }
