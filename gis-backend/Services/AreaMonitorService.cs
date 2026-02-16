@@ -13,6 +13,13 @@ namespace gis_backend.Services
             _repo = repo;
         }
 
+        //GET - samo aktivna pracenja
+        public Task<List<AreaMonitorActiveForAreaDto>> GetActiveByAreaIdAsync(int areaId)
+        {
+            return _repo.GetActiveByAreaIdAsync(areaId);
+        }
+
+
         // CREATE
         public async Task CreateAsync(AreaMonitorCreateDto request)
         {

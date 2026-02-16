@@ -7,5 +7,7 @@ namespace gis_backend.Services
         Task CreateAsync(AreaMonitorCreateDto request);
 
         Task UpdateAsync(int id, AreaMonitorUpdateDto request);
+        Task<List<AreaMonitorActiveForAreaDto>> GetActiveByAreaIdAsync(int areaId);
+
     }
 }

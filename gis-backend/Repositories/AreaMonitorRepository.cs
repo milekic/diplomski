@@ -1,4 +1,5 @@
 ﻿using gis_backend.Data;
+using gis_backend.DTOs.AreaMonitors;
 using gis_backend.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,5 +27,21 @@ namespace gis_backend.Repositories
 
         public Task SaveChangesAsync()
             => _context.SaveChangesAsync();
+
+
+        public async Task<List<AreaMonitorActiveForAreaDto>> GetActiveByAreaIdAsync(int areaId)
+        {
+            return await _context.AreaMonitors
+                .AsNoTracking()
+                .Where(am => am.AreaId == areaId && am.ActiveTo == null)
+                .Select(am => new AreaMonitorActiveForAreaDto
+                {
+                    Id = am.Id,
+                    EventTypeId = am.EventTypeId,
+                    Threshold = am.Threshold
+                })
+                .ToListAsync();
+        }
+
     }
 }

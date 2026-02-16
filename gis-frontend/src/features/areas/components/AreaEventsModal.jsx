@@ -11,32 +11,93 @@ export default function AreaEventsModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Selektovani događaji i pragovi
+  // format: { eventTypeId: thresholdValue }
+  const [selectedEvents, setSelectedEvents] = useState({});
+
+  // Validacione greške
+  const [errors, setErrors] = useState({});
+
   // Učitaj EventTypes kad se modal otvori
   useEffect(() => {
     if (!show) return;
-
-    let cancelled = false;
 
     const load = async () => {
       try {
         setLoading(true);
         setError(null);
-
         const data = await getEventTypes();
-        if (!cancelled) setEventTypes(data ?? []);
-      } catch (e) {
-        if (!cancelled) setError("Ne mogu se učitati tipovi događaja. Pokušaj ponovo.");
+        setEventTypes(data ?? []);
+      } catch {
+        setError("Ne mogu učitati tipove događaja.");
       } finally {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       }
     };
 
     load();
-
-    return () => {
-      cancelled = true;
-    };
   }, [show]);
+
+  // Validacija
+  const validate = (selected) => {
+    const newErrors = {};
+
+    for (const [idStr, value] of Object.entries(selected)) {
+      const id = Number(idStr);
+      const trimmed = String(value).trim();
+
+      if (trimmed === "") {
+        newErrors[id] = "Unesite kritični prag.";
+        continue;
+      }
+
+      const num = Number(trimmed);
+
+      if (Number.isNaN(num)) {
+        newErrors[id] = "Prag mora biti broj.";
+        continue;
+      }
+
+      if (num <= 0) {
+        newErrors[id] = "Prag mora biti veći od 0.";
+      }
+    }
+
+    return newErrors;
+  };
+
+  // Automatska validacija kad se nešto promijeni
+  useEffect(() => {
+    setErrors(validate(selectedEvents));
+  }, [selectedEvents]);
+
+  // Da li je forma validna
+  const isValid =
+    Object.keys(selectedEvents).length > 0 &&
+    Object.keys(errors).length === 0;
+
+  // Checkbox toggle
+  const toggleEvent = (id) => {
+    setSelectedEvents((prev) => {
+      const copy = { ...prev };
+
+      if (copy[id]) {
+        delete copy[id];
+      } else {
+        copy[id] = "";
+      }
+
+      return copy;
+    });
+  };
+
+  // Promjena praga
+  const handleThresholdChange = (id, value) => {
+    setSelectedEvents((prev) => ({
+      ...prev,
+      [id]: value,
+    }));
+  };
 
   if (!show || !area) return null;
 
@@ -58,68 +119,122 @@ export default function AreaEventsModal({
         aria-modal="true"
       >
         <div className="modal-dialog modal-xl modal-dialog-centered">
-          <div className="modal-content shadow-lg border-0" style={{ borderRadius: 12 }}>
+          <div
+            className="modal-content shadow-lg border-0"
+            style={{ borderRadius: 12 }}
+          >
             {/* Header */}
-            <div className="modal-header border-bottom-0" style={{ padding: "1.5rem 2rem 1rem 2rem" }}>
+            <div className="modal-header border-bottom-0 px-4 pt-4">
               <h4 className="modal-title fw-semibold">
                 Upravljanje događajima: "{area.name}"
               </h4>
-              <button type="button" className="btn-close" aria-label="Zatvori" onClick={onClose} />
+              <button
+                type="button"
+                className="btn-close"
+                aria-label="Zatvori"
+                onClick={onClose}
+              />
             </div>
 
             {/* Body */}
-            <div className="modal-body pt-0" style={{ padding: "0 2rem 2rem 2rem" }}>
+            <div className="modal-body px-4 pb-4 pt-2">
               <p className="text-muted mb-4">
-                Odaberite događaje za praćenje (pragove ćemo dodati u sljedećem koraku).
+                Odaberite događaje i definišite kritične pragove:
               </p>
 
-              <div className="border rounded-3 p-4 bg-light" style={{ minHeight: 250 }}>
+              <div className="border rounded-3 p-4 bg-light">
                 {loading ? (
-                  <div className="text-muted">Učitavanje tipova događaja...</div>
+                  <div>Učitavanje...</div>
                 ) : error ? (
-                  <div className="alert alert-danger mb-0" role="alert">
-                    {error}
-                  </div>
-                ) : eventTypes.length === 0 ? (
-                  <div className="text-muted">Nema dostupnih tipova događaja.</div>
+                  <div className="alert alert-danger">{error}</div>
                 ) : (
                   <div className="d-flex flex-column gap-3">
-                    {eventTypes.map((et) => (
-                      <label
-                        key={et.id}
-                        className="d-flex align-items-start gap-3 bg-white border rounded-3 p-3"
-                        style={{ cursor: "pointer" }}
-                      >
-                        <input
-                          type="checkbox"
-                          className="form-check-input mt-1"
-                          // za sada ništa ne radimo (kasnije dodajemo state)
-                          onChange={() => {}}
-                        />
+                    {eventTypes.map((et) => {
+                      const isChecked =
+                        selectedEvents.hasOwnProperty(et.id);
 
-                        <div className="flex-grow-1">
-                          <div className="fw-semibold">{et.name}</div>
-                          {et.description ? (
-                            <div className="text-muted small">{et.description}</div>
-                          ) : null}
-                        </div>
+                      return (
+                        <div
+                          key={et.id}
+                          className="bg-white border rounded-3 p-3"
+                        >
+                          <div className="d-flex align-items-start gap-3">
+                            {/* Checkbox */}
+                            <input
+                              type="checkbox"
+                              className="form-check-input mt-1"
+                              checked={isChecked}
+                              onChange={() => toggleEvent(et.id)}
+                            />
 
-                        <div className="text-muted small" style={{ minWidth: 70, textAlign: "right" }}>
-                          {et.unit}
+                            {/* Naziv + opis */}
+                            <div className="flex-grow-1">
+                              <div className="fw-semibold">
+                                {et.name}
+                              </div>
+                              <div className="text-muted small">
+                                {et.description}
+                              </div>
+                            </div>
+
+                            {/* Threshold input */}
+                            <div className="d-flex align-items-center gap-2">
+                              <input
+                                type="number"
+                                className="form-control"
+                                style={{ width: 150 }}
+                                placeholder="Kritični prag"
+                                disabled={!isChecked}
+                                value={
+                                  selectedEvents[et.id] ?? ""
+                                }
+                                onChange={(e) =>
+                                  handleThresholdChange(
+                                    et.id,
+                                    e.target.value
+                                  )
+                                }
+                              />
+                              <span className="text-muted">
+                                {et.unit}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Error poruka */}
+                          {isChecked && errors[et.id] && (
+                            <div className="text-danger small mt-2">
+                              {errors[et.id]}
+                            </div>
+                          )}
                         </div>
-                      </label>
-                    ))}
+                      );
+                    })}
+
+                    {Object.keys(selectedEvents).length === 0 && (
+                      <div className="text-muted small mt-3">
+                        Odaberite bar jedan događaj.
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             </div>
 
             {/* Footer */}
-            <div className="modal-footer border-top-0" style={{ padding: "1rem 2rem 1.5rem 2rem" }}>
-              <button type="button" className="btn btn-outline-secondary px-4" onClick={onClose}>
+            <div className="modal-footer border-top-0 px-4 pb-4">
+              <button
+                className="btn btn-outline-secondary px-4"
+                onClick={onClose}
+              >
                 Otkaži
               </button>
-              <button type="button" className="btn btn-primary px-4" onClick={onConfirm}>
+
+              <button
+                className="btn btn-primary px-4"
+                disabled={!isValid}
+                onClick={() => onConfirm(selectedEvents)}
+              >
                 Potvrdi
               </button>
             </div>

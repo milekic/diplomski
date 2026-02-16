@@ -17,6 +17,15 @@ namespace gis_backend.Controllers
             _service = service;
         }
 
+        // GET: api/areamonitors/area/5
+        [HttpGet("area/{areaId:int}")]
+        public async Task<IActionResult> GetActiveByAreaId(int areaId)
+        {
+            var list = await _service.GetActiveByAreaIdAsync(areaId);
+            return Ok(list);
+        }
+
+
         // POST: api/areamonitors
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] AreaMonitorCreateDto request)
