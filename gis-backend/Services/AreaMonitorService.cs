@@ -13,6 +13,13 @@ namespace gis_backend.Services
             _repo = repo;
         }
 
+        //GET - samo aktivna pracenja
+        public Task<List<AreaMonitorActiveForAreaDto>> GetActiveByAreaIdAsync(int areaId)
+        {
+            return _repo.GetActiveByAreaIdAsync(areaId);
+        }
+
+
         // CREATE
         public async Task CreateAsync(AreaMonitorCreateDto request)
         {
@@ -42,5 +49,47 @@ namespace gis_backend.Services
 
             await _repo.SaveChangesAsync();
         }
+
+        public async Task SyncForAreaAsync(int areaId, Dictionary<int, double?> selected)
+        {
+            var active = await _repo.GetActiveEntitiesByAreaIdAsync(areaId);
+
+            var now = DateTime.UtcNow;
+
+            var activeByEvent = active.ToDictionary(x => x.EventTypeId, x => x);
+
+            foreach (var kv in selected)
+            {
+                var eventTypeId = kv.Key;
+                var threshold = kv.Value;
+
+                if (activeByEvent.TryGetValue(eventTypeId, out var existingActive))
+                {
+                    existingActive.Threshold = threshold;
+                }
+                else
+                {
+                    await _repo.AddAsync(new AreaMonitor
+                    {
+                        AreaId = areaId,
+                        EventTypeId = eventTypeId,
+                        Threshold = threshold,
+                        ActiveFrom = now,
+                        ActiveTo = null
+                    });
+                }
+            }
+
+            foreach (var m in active)
+            {
+                if (!selected.ContainsKey(m.EventTypeId))
+                {
+                    m.ActiveTo = now;
+                }
+            }
+
+            await _repo.SaveChangesAsync();
+        }
+
     }
 }

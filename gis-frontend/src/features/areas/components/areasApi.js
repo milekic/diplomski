@@ -14,7 +14,6 @@ export const deleteArea = async (id) => {
 };
 
 export const createArea = async (payload) => {
-  // payload: { name, description, isGlobal, //isMonitored, geomGeoJson }
   const response = await apiClient.post("/areas", payload);
   return response.data;
 };

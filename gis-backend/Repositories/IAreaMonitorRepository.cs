@@ -1,4 +1,5 @@
-﻿using gis_backend.Models;
+﻿using gis_backend.DTOs.AreaMonitors;
+using gis_backend.Models;
 
 namespace gis_backend.Repositories
 {
@@ -9,5 +10,13 @@ namespace gis_backend.Repositories
         Task AddAsync(AreaMonitor areaMonitor);
 
         Task SaveChangesAsync();
+        
+        Task<List<AreaMonitorActiveForAreaDto>> GetActiveByAreaIdAsync(int areaId);
+
+        //za sinhronization pattern
+        Task<List<AreaMonitor>> GetActiveEntitiesByAreaIdAsync(int areaId);
+
+
+
     }
 }

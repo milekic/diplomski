@@ -17,6 +17,15 @@ namespace gis_backend.Controllers
             _service = service;
         }
 
+        // GET: api/areamonitors/area/5
+        [HttpGet("area/{areaId:int}")]
+        public async Task<IActionResult> GetActiveByAreaId(int areaId)
+        {
+            var list = await _service.GetActiveByAreaIdAsync(areaId);
+            return Ok(list);
+        }
+
+
         // POST: api/areamonitors
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] AreaMonitorCreateDto request)
@@ -24,7 +33,7 @@ namespace gis_backend.Controllers
             try
             {
                 await _service.CreateAsync(request);
-                return Ok(new { message = "Praćenje je uspješno kreirano." });
+                return Ok(new { message = "Nova oblast se uspješno prati." });
             }
             catch (ArgumentException ex)
             {
@@ -39,7 +48,7 @@ namespace gis_backend.Controllers
             try
             {
                 await _service.UpdateAsync(id, request);
-                return Ok(new { message = "Praćenje je uspješno ažurirano." });
+                return Ok(new { message = "Praćenje oblasti je uspješno ažurirano." });
             }
             catch (KeyNotFoundException)
             {
@@ -50,5 +59,16 @@ namespace gis_backend.Controllers
                 return BadRequest(new { message = "Neispravni podaci za izmjenu praćenja." });
             }
         }
+
+        //sinhronization pattern (za check listu)
+        [HttpPut("area/{areaId:int}/sync")]
+        public async Task<IActionResult> SyncForArea(int areaId, [FromBody] AreaMonitorSyncRequestDto request)
+        {
+            await _service.SyncForAreaAsync(areaId, request.Selected);
+            return Ok(new { message = "Praćenja su uspješno ažurirana." });
+        }
+
+
+
     }
 }

@@ -7,6 +7,10 @@ import ConfirmModal from "../shared/ui/ConfirmModal";
 import AreaCreateModal from "../features/areas/components/AreaCreateModal";
 import AreaEditModal from "../features/areas/components/AreaEditModal";
 import { DEFAULT_PAGE_SIZE } from "../shared/constants/mapConstants";
+import AreaEventsModal from "../features/areas/components/AreaEventsModal";
+import { syncAreaMonitors } from "../features/areas/components/areaMonitorsApi";
+
+
 
 
 
@@ -26,6 +30,8 @@ export default function AreasPage() {
   const [success, setSuccess] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [showEventsModal, setShowEventsModal] = useState(false);
+
 
   const {
     currentPage,
@@ -102,9 +108,7 @@ export default function AreasPage() {
       setError("Došlo je do greške pri brisanju oblasti. Pokušajte ponovo.");
     } finally {
       setDeleting(false);
-}
-
-  };
+}};
 
   const onCreateArea = async (payload) => {
   try {
@@ -124,6 +128,37 @@ export default function AreasPage() {
     setCreating(false);
   }
 };
+
+const onConfirmEvents = async (selectedEvents) => {
+  if (!selectedArea) return;
+
+  try {
+    setError(null);
+    setSuccess(null);
+
+    // pretvori { id: "12.3" } -> { id: 12.3 }
+    const selected = {};
+    for (const [eventTypeIdStr, value] of Object.entries(selectedEvents)) {
+      const eventTypeId = Number(eventTypeIdStr);
+
+      // validate već radi u modalu, ali svejedno:
+      const num = Number(String(value).trim());
+      selected[eventTypeId] = Number.isFinite(num) ? num : null;
+    }
+
+    await syncAreaMonitors(selectedArea.id, selected);
+
+    showSuccess("Praćenja su uspješno sačuvana ✅");
+    setShowEventsModal(false);
+
+    // opciono: ako želiš da odmah osvježiš detalje / listu
+    // await loadAreas();
+
+  } catch (e) {
+    setError(e?.message ?? "Došlo je do greške pri čuvanju praćenja.");
+  }
+};
+
 
 
 
@@ -177,17 +212,26 @@ export default function AreasPage() {
                 setSelectedArea(null);
               }}
               onSelect={setSelectedArea}
+
               onAdd={() =>{ 
                 setError(null);
                 setSuccess(null);
                 setShowCreateModal(true);
               }}
 
-              onEdit={() => {
+               onEdit={() => {
                  setError(null);
                  setSuccess(null);
                  setShowEditModal(true);
-                }}
+              }}
+                
+                //upravljanje dogadjajima
+              onManageEvents={() => {
+                if (!selectedArea) return;
+                setShowEventsModal(true);
+              }}
+
+
 
               onDelete={onAskDelete}
               onViewDetails={() => console.log("Pregled detalja")}
@@ -246,8 +290,17 @@ export default function AreasPage() {
                  setEditing(false);
                 }
             }}
-
           />
+
+          <AreaEventsModal
+            show={showEventsModal}
+            area={selectedArea}
+            onClose={() => setShowEventsModal(false)}
+            onConfirm={onConfirmEvents}
+          />
+
+          
+
 
 
 

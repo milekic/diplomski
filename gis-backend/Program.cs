@@ -74,6 +74,10 @@ builder.Services.AddScoped<IAreaService, AreaService>();
 builder.Services.AddScoped<IAreaMonitorRepository, AreaMonitorRepository>();
 builder.Services.AddScoped<IAreaMonitorService, AreaMonitorService>();
 
+builder.Services.AddScoped<IEventTypeRepository, EventTypeRepository>();
+builder.Services.AddScoped<IEventTypeService, EventTypeService>();
+
+
 
 //za staticke podatke
 builder.Services.Configure<SpatialOptions>(

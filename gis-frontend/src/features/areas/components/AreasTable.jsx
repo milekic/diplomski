@@ -14,6 +14,7 @@ export default function AreasTable({
   onEdit = () => {},
   onDelete = () => {},
   onViewDetails = () => {},
+  onManageEvents = () => {},
 }) {
   return (
     <div className="d-flex flex-column h-100">
@@ -43,6 +44,18 @@ export default function AreasTable({
     >
       <i className="bi bi-pencil" />
     </button>
+
+    <button
+      type="button"
+      className="btn btn-outline-primary btn-sm"
+      onClick={() => onManageEvents(selectedId)}
+      disabled={!selectedId}
+      title="Uredi događaje"
+      aria-label="Uredi događaje"
+    >
+      <i className="bi bi-gear" />
+    </button>
+
 
     <button
       type="button"
