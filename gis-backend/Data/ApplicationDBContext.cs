@@ -39,5 +39,7 @@ namespace gis_backend.Data
         public DbSet<Area> Areas { get; set; }
         public DbSet<EventType> EventTypes { get; set; }
         public DbSet<AreaMonitor> AreaMonitors { get; set; }
+        public DbSet<Measurement> Measurements { get; set; }
+
     }
 }

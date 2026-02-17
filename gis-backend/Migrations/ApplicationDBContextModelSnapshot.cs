@@ -137,6 +137,46 @@ namespace gis_backend.Migrations
                     b.ToTable("EventTypes");
                 });
 
+            modelBuilder.Entity("gis_backend.Models.Measurement", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("AreaId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("AreaMonitorId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EventTypeId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsCritical")
+                        .HasColumnType("boolean");
+
+                    b.Property<Point>("Location")
+                        .IsRequired()
+                        .HasColumnType("geometry");
+
+                    b.Property<DateTime>("MeasuredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double?>("ThresholdAtThatTime")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Value")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AreaMonitorId");
+
+                    b.ToTable("Measurements");
+                });
+
             modelBuilder.Entity("gis_backend.Models.User", b =>
                 {
                     b.Property<int>("Id")
@@ -198,6 +238,17 @@ namespace gis_backend.Migrations
                     b.Navigation("Area");
 
                     b.Navigation("EventType");
+                });
+
+            modelBuilder.Entity("gis_backend.Models.Measurement", b =>
+                {
+                    b.HasOne("gis_backend.Models.AreaMonitor", "AreaMonitor")
+                        .WithMany()
+                        .HasForeignKey("AreaMonitorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AreaMonitor");
                 });
 #pragma warning restore 612, 618
         }
