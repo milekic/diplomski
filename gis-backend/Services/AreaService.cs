@@ -152,5 +152,19 @@ namespace gis_backend.Services
 
             return poly;
         }
+
+
+        public async Task<List<AreaListItemDto>> GetVisibleAreasAsync(int userId)
+        {
+            var areas = await _repo.GetVisibleAreasAsync(userId);
+
+            return areas
+                .OrderByDescending(a => a.Id)
+                .Select(a => a.ToListItemDto())
+                .ToList();
+        }
+
+
+
     }
 }

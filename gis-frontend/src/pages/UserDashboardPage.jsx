@@ -1,21 +1,44 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import LayersTree from "../features/map/components/LayersTree";
 import MapView from "../features/map/components/MapView";
+import { getVisibleAreas } from "../features/map/components/visibleAreasApi"; // ako ti je druga putanja, prilagodi
 
 export default function UserDashboardPage() {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  // sve oblasti (moje + globalne)
+  const [areas, setAreas] = useState([]);
+
+  // čekirani ID-evi iz tree-a
+  const [selectedAreaIds, setSelectedAreaIds] = useState([]);
+
+  // učitaj oblasti jednom
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await getVisibleAreas();
+        setAreas(Array.isArray(data) ? data : []);
+      } catch (e) {
+        console.error("Ne mogu učitati oblasti");
+        setAreas([]);
+      }
+    })();
+  }, []);
+
+  // izračunaj selektovane oblasti 
+  const selectedAreas = useMemo(() => {
+    const setIds = new Set(selectedAreaIds);
+    return areas.filter((a) => setIds.has(a.id ?? a.Id));
+  }, [areas, selectedAreaIds]);
+
   return (
     <div className="container-fluid vh-100 d-flex flex-column">
-
-      
-
       {/* ===== MAIN CONTENT ===== */}
       <div className="row flex-grow-1 overflow-hidden">
-
         {/* ===== LEFT SIDEBAR ===== */}
         <div className="col-2 border-end p-3 overflow-auto">
-          <LayersTree onLayersChange={(keys) => console.log("Slojevi:", keys)} />
+          {/* umjesto console.log, setuj state */}
+          <LayersTree onLayersChange={setSelectedAreaIds} />
         </div>
 
         {/* ===== MAP AREA ===== */}
@@ -24,8 +47,6 @@ export default function UserDashboardPage() {
             className="border rounded position-relative bg-light"
             style={{ height: "92%" }}
           >
-
-
             {/* Toggle dugme */}
             <button
               className="btn btn-sm btn-outline-secondary position-absolute"
@@ -35,15 +56,14 @@ export default function UserDashboardPage() {
               {isExpanded ? "⮜" : "⮞"}
             </button>
 
-            <MapView />
-
+            {/* proslijedi selektovane oblasti */}
+            <MapView selectedAreas={selectedAreas} />
           </div>
         </div>
 
         {/* ===== RIGHT PANEL ===== */}
         {!isExpanded && (
           <div className="col-2 border-start p-3 overflow-auto">
-
             <h6>Detalji oblasti</h6>
 
             <div className="mb-3">
@@ -67,14 +87,9 @@ export default function UserDashboardPage() {
                 PDF izvještaj
               </button>
             </div>
-
           </div>
         )}
-
       </div>
-
-     
-
     </div>
   );
 }

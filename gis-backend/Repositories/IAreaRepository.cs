@@ -11,6 +11,8 @@ namespace gis_backend.Repositories
         Task<Area?> GetByIdForOwnerAsync(int id, int ownerUserId);
         Task SaveChangesAsync();
         Task AddAsync(Area area);
+        Task<List<Area>> GetVisibleAreasAsync(int userId);
+
 
     }
 }

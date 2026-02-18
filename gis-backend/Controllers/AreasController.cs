@@ -38,6 +38,17 @@ namespace gis_backend.Controllers
             return Ok(list);
         }
 
+        //vracaju se sve korisnikove aktivne oblasti + globalne oblasti drugih korisnika (upotreba u LayersTree)
+        // GET: api/areas/visible
+        [HttpGet("visible")]
+        public async Task<ActionResult<List<AreaListItemDto>>> GetVisibleAreas()
+        {
+            var userId = GetCurrentUserId();
+            var list = await _service.GetVisibleAreasAsync(userId);
+            return Ok(list);
+        }
+
+
         // DELETE: api/areas/5
         [HttpDelete("{id:int}")]
         public async Task<ActionResult<AreaDeleteResponseDto>> Delete(int id)
