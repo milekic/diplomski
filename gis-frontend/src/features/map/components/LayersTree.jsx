@@ -5,52 +5,56 @@ import { getVisibleAreas } from "./visibleAreasApi";
 export default function LayersTree({ onLayersChange }) {
   const [checkedKeys, setCheckedKeys] = useState([]);
   const [areas, setAreas] = useState([]);
+  const [expandedKeys, setExpandedKeys] = useState(["global", "my"]); // <- automatski razgranjeno
+  const [autoExpandParent, setAutoExpandParent] = useState(true);
 
-useEffect(() => {
-  (async () => {
-    try {
-      const data = await getVisibleAreas();
-      const list = Array.isArray(data) ? data : [];
-      setAreas(list);
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await getVisibleAreas();
+        const list = Array.isArray(data) ? data : [];
+        setAreas(list);
 
-      // auto-check monitored
-      const monitoredKeys = list
-        .filter((a) => (a.isMonitored ?? a.IsMonitored) === true)
-        .map((a) => `area-${a.id ?? a.Id}`);
+        // auto-check monitored
+        const monitoredKeys = list
+          .filter((a) => (a.isMonitored ?? a.IsMonitored) === true)
+          .map((a) => `area-${a.id ?? a.Id}`);
 
-      setCheckedKeys(monitoredKeys);
+        setCheckedKeys(monitoredKeys);
 
-      
-      if (onLayersChange) {
-        const monitoredIds = monitoredKeys
-          .map((k) => Number(k.replace("area-", "")))
-          .filter(Number.isFinite);
+        
+        setExpandedKeys(["global", "my"]);
+        setAutoExpandParent(true);
 
-        onLayersChange(monitoredIds);
+        if (onLayersChange) {
+          const monitoredIds = monitoredKeys
+            .map((k) => Number(k.replace("area-", "")))
+            .filter(Number.isFinite);
+
+          onLayersChange(monitoredIds);
+        }
+      } catch (e) {
+        setAreas([]);
+        setCheckedKeys([]);
+        setExpandedKeys(["global", "my"]);
       }
-    } catch (e) {
-      //console.error("Ne mogu učitati oblasti (/areas/visible):", e);
-      setAreas([]);
-      setCheckedKeys([]);
-    }
-  })();
-}, []);
-
+    })();
+  }, [onLayersChange]);
 
   const treeData = useMemo(() => {
     const globalAreas = areas
-      .filter((a) => a.isGlobal)
+      .filter((a) => (a.isGlobal ?? a.IsGlobal) === true)
       .map((a) => ({
-        title: a.name,         
-        key: `area-${a.id}`,   
+        title: a.name ?? a.Name,
+        key: `area-${a.id ?? a.Id}`,
         isLeaf: true,
       }));
 
     const myAreas = areas
-      .filter((a) => !a.isGlobal)
+      .filter((a) => (a.isGlobal ?? a.IsGlobal) !== true)
       .map((a) => ({
-        title: a.name,
-        key: `area-${a.id}`,
+        title: a.name ?? a.Name,
+        key: `area-${a.id ?? a.Id}`,
         isLeaf: true,
       }));
 
@@ -68,24 +72,35 @@ useEffect(() => {
     ];
   }, [areas]);
 
-  const onCheck = (newCheckedKeys) => {
-    setCheckedKeys(newCheckedKeys);
+  const onCheck = (newCheckedKeysValue) => {
+    const keysArray = Array.isArray(newCheckedKeysValue)
+      ? newCheckedKeysValue
+      : newCheckedKeysValue?.checked || [];
+
+    setCheckedKeys(keysArray);
 
     if (onLayersChange) {
-      const areaIds = newCheckedKeys
+      const areaIds = keysArray
         .filter((k) => typeof k === "string" && k.startsWith("area-"))
         .map((k) => Number(k.replace("area-", "")))
-        .filter((id) => Number.isFinite(id));
+        .filter(Number.isFinite);
 
       onLayersChange(areaIds);
     }
+  };
+
+  const onExpand = (newExpandedKeys) => {
+    setExpandedKeys(newExpandedKeys);
+    setAutoExpandParent(false);
   };
 
   return (
     <Tree
       style={{ fontSize: "17px" }}
       checkable
-      defaultExpandAll
+      expandedKeys={expandedKeys}
+      autoExpandParent={autoExpandParent}
+      onExpand={onExpand}
       checkedKeys={checkedKeys}
       onCheck={onCheck}
       treeData={treeData}
