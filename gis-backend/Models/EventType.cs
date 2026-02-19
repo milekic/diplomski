@@ -20,5 +20,8 @@ namespace gis_backend.Models
         public string Unit { get; set; } = string.Empty;
         [Required]
         public bool IsActive { get; set; } = true;
+        public double? MinThreshold { get; set; }
+        public double? MaxThreshold { get; set; }
+
     }
 }

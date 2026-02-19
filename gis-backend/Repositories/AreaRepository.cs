@@ -50,6 +50,22 @@ namespace gis_backend.Repositories
             await _context.Areas.AddAsync(area);
         }
 
+        public async Task<List<Area>> GetVisibleAreasAsync(int userId)
+        {
+            return await _context.Areas
+                .AsNoTracking()
+                .Where(a =>
+                    a.IsActive &&
+                    (
+                        a.OwnerUserId == userId        
+                        || a.IsGlobal                  
+                    )
+                )
+                .OrderBy(a => a.Name)
+                .ToListAsync();
+        }
+
+
 
     }
 }
