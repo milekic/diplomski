@@ -5,6 +5,7 @@ import { getVisibleAreas } from "../features/map/components/visibleAreasApi"; //
 
 export default function UserDashboardPage() {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [eventVisibilityMode, setEventVisibilityMode] = useState("all");
 
   // sve oblasti (moje + globalne)
   const [areas, setAreas] = useState([]);
@@ -32,7 +33,7 @@ export default function UserDashboardPage() {
   }, [areas, selectedAreaIds]);
 
   return (
-    <div className="container-fluid vh-100 d-flex flex-column">
+    <div className="container-fluid vh-100 d-flex flex-column">        
       {/* ===== MAIN CONTENT ===== */}
       <div className="row flex-grow-1 overflow-hidden">
         {/* ===== LEFT SIDEBAR ===== */}
@@ -43,9 +44,41 @@ export default function UserDashboardPage() {
 
         {/* ===== MAP AREA ===== */}
         <div className={`${isExpanded ? "col-10" : "col-8"} p-3 d-flex flex-column`}>
+          <div className="d-flex align-items-center gap-3 mb-2">
+            <span className="fw-semibold small mb-0">Prikaz događaja:</span>
+
+            <div className="form-check form-check-inline mb-0">
+              <input
+                className="form-check-input"
+                type="radio"
+                name="eventVisibilityMode"
+                id="event-mode-all"
+                checked={eventVisibilityMode === "all"}
+                onChange={() => setEventVisibilityMode("all")}
+              />
+              <label className="form-check-label small" htmlFor="event-mode-all">
+                Svi događaji
+              </label>
+            </div>
+
+            <div className="form-check form-check-inline mb-0">
+              <input
+                className="form-check-input"
+                type="radio"
+                name="eventVisibilityMode"
+                id="event-mode-critical"
+                checked={eventVisibilityMode === "criticalOnly"}
+                onChange={() => setEventVisibilityMode("criticalOnly")}
+              />
+              <label className="form-check-label small" htmlFor="event-mode-critical">
+                Samo kritični
+              </label>
+            </div>
+          </div>
+
           <div
             className="border rounded position-relative bg-light"
-            style={{ height: "92%" }}
+            style={{ height: "90%" }}
           >
             {/* Toggle dugme */}
             <button
@@ -57,7 +90,10 @@ export default function UserDashboardPage() {
             </button>
 
             {/* proslijedi selektovane oblasti */}
-            <MapView selectedAreas={selectedAreas} />
+            <MapView
+              selectedAreas={selectedAreas}
+              eventVisibilityMode={eventVisibilityMode}
+            />
           </div>
         </div>
 

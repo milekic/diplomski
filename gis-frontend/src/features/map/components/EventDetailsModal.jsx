@@ -46,7 +46,7 @@ export default function EventDetailsModal({ show, event, onClose }) {
 
             <div className="modal-footer">
               <button className="btn btn-secondary btn-sm" onClick={onClose}>
-                Zatvori
+                close
               </button>
             </div>
           </div>

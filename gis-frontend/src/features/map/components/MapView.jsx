@@ -21,6 +21,7 @@ import {
 import { createMonitoringConnection } from "../../../shared/realtime/monitoringConnection";
 import apiClient from "../../../shared/api/apiClient";
 import EventDetailsModal from "./EventDetailsModal";
+import { getActiveAreaMonitorsByAreaId } from "../../areas/components/areaMonitorsApi";
 
 function toFeatureCollection(geomGeoJson) {
   if (!geomGeoJson) return null;
@@ -74,7 +75,10 @@ function iconForEventTypeName(nameRaw) {
   return DEFAULT_ICON_URL;
 }
 
-export default function MapView({ selectedAreas = [] }) {
+export default function MapView({
+  selectedAreas = [],
+  eventVisibilityMode = "all",
+}) {
   const mapDivRef = useRef(null);
   const mapRef = useRef(null);
 
@@ -90,6 +94,9 @@ export default function MapView({ selectedAreas = [] }) {
 
   // 🔥 SVI događaji se čuvaju ovdje
   const [allEvents, setAllEvents] = useState([]);
+  const [thresholdByAreaAndEvent, setThresholdByAreaAndEvent] = useState(
+    {}
+  );
 
   const [eventTypeIconById, setEventTypeIconById] = useState({});
   const eventTypeIconByIdRef = useRef(eventTypeIconById);
@@ -132,6 +139,10 @@ export default function MapView({ selectedAreas = [] }) {
         .filter(Number.isFinite)
     );
   }, [selectedAreas]);
+
+  const selectedAreaIds = useMemo(() => {
+    return [...selectedAreaIdSet];
+  }, [selectedAreaIdSet]);
 
   // ===== INIT MAP =====
   useEffect(() => {
@@ -230,13 +241,75 @@ export default function MapView({ selectedAreas = [] }) {
     });
   }, [selectedAreas]);
 
+  // ===== LOAD THRESHOLDS FOR SELECTED AREAS =====
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadThresholds = async () => {
+      if (selectedAreaIds.length === 0) {
+        setThresholdByAreaAndEvent({});
+        return;
+      }
+
+      const rows = await Promise.all(
+        selectedAreaIds.map(async (areaId) => {
+          try {
+            const monitors = await getActiveAreaMonitorsByAreaId(areaId);
+            return { areaId, monitors: Array.isArray(monitors) ? monitors : [] };
+          } catch {
+            return { areaId, monitors: [] };
+          }
+        })
+      );
+
+      if (cancelled) return;
+
+      const next = {};
+
+      for (const row of rows) {
+        for (const monitor of row.monitors) {
+          const eventTypeId = Number(
+            monitor.eventTypeId ?? monitor.EventTypeId
+          );
+          const threshold = Number(
+            monitor.threshold ?? monitor.Threshold
+          );
+
+          if (!Number.isFinite(eventTypeId) || !Number.isFinite(threshold))
+            continue;
+
+          next[`${row.areaId}-${eventTypeId}`] = threshold;
+        }
+      }
+
+      setThresholdByAreaAndEvent(next);
+    };
+
+    loadThresholds();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedAreaIds]);
+
   // 🔥 FILTRIRANJE EVENTA PREMA ČEKIRANIM OBLASTIMA
   useEffect(() => {
     const source = eventSourceRef.current;
     source.clear();
 
+    const isCritical = (e) => {
+      const value = Number(e.value);
+      if (!Number.isFinite(value)) return false;
+
+      const threshold = thresholdByAreaAndEvent[`${e.areaId}-${e.eventTypeId}`];
+      if (!Number.isFinite(threshold)) return false;
+
+      return value > threshold;
+    };
+
     allEvents
       .filter((e) => selectedAreaIdSet.has(e.areaId))
+      .filter((e) => (eventVisibilityMode === "criticalOnly" ? isCritical(e) : true))
       .forEach((e) => {
         const point = new Point(
           fromLonLat([Number(e.x), Number(e.y)])
@@ -251,7 +324,7 @@ export default function MapView({ selectedAreas = [] }) {
 
         source.addFeature(feature);
       });
-  }, [allEvents, selectedAreaIdSet]);
+  }, [allEvents, eventVisibilityMode, selectedAreaIdSet, thresholdByAreaAndEvent]);
 
   // ===== SIGNALR =====
   useEffect(() => {
