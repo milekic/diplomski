@@ -88,6 +88,9 @@ export default function MapView({ selectedAreas = [] }) {
   const eventSourceRef = useRef(new VectorSource());
   const styleCacheRef = useRef({});
 
+  // 🔥 SVI događaji se čuvaju ovdje
+  const [allEvents, setAllEvents] = useState([]);
+
   const [eventTypeIconById, setEventTypeIconById] = useState({});
   const eventTypeIconByIdRef = useRef(eventTypeIconById);
 
@@ -130,11 +133,6 @@ export default function MapView({ selectedAreas = [] }) {
     );
   }, [selectedAreas]);
 
-  const selectedAreaIdSetRef = useRef(selectedAreaIdSet);
-  useEffect(() => {
-    selectedAreaIdSetRef.current = selectedAreaIdSet;
-  }, [selectedAreaIdSet]);
-
   // ===== INIT MAP =====
   useEffect(() => {
     if (mapRef.current) return;
@@ -152,12 +150,11 @@ export default function MapView({ selectedAreas = [] }) {
       }),
     });
 
-    // 👉 Klik na ikonicu
+    // Klik na ikonicu
     map.on("singleclick", (evt) => {
       map.forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
         if (layer === eventLayerRef.current) {
-          const geometry = feature.getGeometry();
-          const coords = geometry.getCoordinates();
+          const coords = feature.getGeometry().getCoordinates();
           const lonLat = toLonLat(coords);
 
           setSelectedEvent({
@@ -175,7 +172,6 @@ export default function MapView({ selectedAreas = [] }) {
       });
     });
 
-    // 👉 Hover pointer
     map.on("pointermove", function (e) {
       const hit = map.hasFeatureAtPixel(e.pixel);
       map.getTargetElement().style.cursor = hit ? "pointer" : "";
@@ -234,13 +230,35 @@ export default function MapView({ selectedAreas = [] }) {
     });
   }, [selectedAreas]);
 
+  // 🔥 FILTRIRANJE EVENTA PREMA ČEKIRANIM OBLASTIMA
+  useEffect(() => {
+    const source = eventSourceRef.current;
+    source.clear();
+
+    allEvents
+      .filter((e) => selectedAreaIdSet.has(e.areaId))
+      .forEach((e) => {
+        const point = new Point(
+          fromLonLat([Number(e.x), Number(e.y)])
+        );
+
+        const feature = new Feature({ geometry: point });
+
+        feature.set("areaId", e.areaId);
+        feature.set("eventTypeId", e.eventTypeId);
+        feature.set("value", e.value);
+        feature.set("measuredAtUtc", e.measuredAtUtc);
+
+        source.addFeature(feature);
+      });
+  }, [allEvents, selectedAreaIdSet]);
+
   // ===== SIGNALR =====
   useEffect(() => {
     const connection = createMonitoringConnection();
 
     connection.on("MeasurementUpdated", (payload) => {
       const areaId = Number(payload.areaId ?? payload.AreaId);
-      if (!selectedAreaIdSetRef.current.has(areaId)) return;
 
       const x = payload.x ?? payload.X;
       const y = payload.y ?? payload.Y;
@@ -250,21 +268,19 @@ export default function MapView({ selectedAreas = [] }) {
         payload.eventTypeId ?? payload.EventTypeId
       );
 
-      const point = new Point(
-        fromLonLat([Number(x), Number(y)])
-      );
-
-      const feature = new Feature({ geometry: point });
-
-      feature.set("areaId", areaId);
-      feature.set("eventTypeId", eventTypeId);
-      feature.set("value", payload.value ?? payload.Value);
-      feature.set(
-        "measuredAtUtc",
-        payload.measuredAtUtc ?? payload.MeasuredAtUtc
-      );
-
-      eventSourceRef.current.addFeature(feature);
+      // 🔥 Dodaj u React state (ne direktno na mapu)
+      setAllEvents((prev) => [
+        ...prev,
+        {
+          areaId,
+          eventTypeId,
+          value: payload.value ?? payload.Value,
+          measuredAtUtc:
+            payload.measuredAtUtc ?? payload.MeasuredAtUtc,
+          x: Number(x),
+          y: Number(y),
+        },
+      ]);
     });
 
     connection.start().catch(() =>
