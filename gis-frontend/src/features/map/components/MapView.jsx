@@ -23,7 +23,8 @@ import EventDetailsModal from "./EventDetailsModal";
 import { DEFAULT_ICON_URL } from "./eventIcons";
 import { toFeatureCollection } from "./geoJsonUtils";
 import { loadThresholdByAreaAndEvent } from "./thresholdUtils";
-import { loadEventTypeIconById } from "./eventTypeIconUtils";
+import { loadEventTypeMetaById } from "./eventTypeIconUtils";
+import { buildSelectedEventDetails } from "./eventSelectionUtils";
 
 export default function MapView({
   selectedAreas = [],
@@ -49,7 +50,11 @@ export default function MapView({
   );
 
   const [eventTypeIconById, setEventTypeIconById] = useState({});
+  const [eventTypeNameById, setEventTypeNameById] = useState({});
+  const [eventTypeUnitById, setEventTypeUnitById] = useState({});
   const eventTypeIconByIdRef = useRef(eventTypeIconById);
+  const eventTypeNameByIdRef = useRef(eventTypeNameById);
+  const eventTypeUnitByIdRef = useRef(eventTypeUnitById);
 
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -57,6 +62,14 @@ export default function MapView({
   useEffect(() => {
     eventTypeIconByIdRef.current = eventTypeIconById;
   }, [eventTypeIconById]);
+
+  useEffect(() => {
+    eventTypeNameByIdRef.current = eventTypeNameById;
+  }, [eventTypeNameById]);
+
+  useEffect(() => {
+    eventTypeUnitByIdRef.current = eventTypeUnitById;
+  }, [eventTypeUnitById]);
 
   const eventLayerRef = useRef(
     new VectorLayer({
@@ -94,6 +107,22 @@ export default function MapView({
     return [...selectedAreaIdSet];
   }, [selectedAreaIdSet]);
 
+  const areaNameById = useMemo(() => {
+    const map = {};
+    for (const a of selectedAreas) {
+      const id = Number(a.id ?? a.Id);
+      if (!Number.isFinite(id)) continue;
+      map[id] = a.name ?? a.Name ?? "-";
+    }
+    return map;
+  }, [selectedAreas]);
+
+  const areaNameByIdRef = useRef(areaNameById);
+
+  useEffect(() => {
+    areaNameByIdRef.current = areaNameById;
+  }, [areaNameById]);
+
   // ===== INIT MAP =====
   useEffect(() => {
     if (mapRef.current) return;
@@ -118,14 +147,15 @@ export default function MapView({
           const coords = feature.getGeometry().getCoordinates();
           const lonLat = toLonLat(coords);
 
-          setSelectedEvent({
-            areaId: feature.get("areaId"),
-            eventTypeId: feature.get("eventTypeId"),
-            value: feature.get("value"),
-            measuredAtUtc: feature.get("measuredAtUtc"),
-            x: lonLat?.[0],
-            y: lonLat?.[1],
-          });
+          setSelectedEvent(
+            buildSelectedEventDetails(
+              feature,
+              lonLat,
+              areaNameByIdRef.current,
+              eventTypeNameByIdRef.current,
+              eventTypeUnitByIdRef.current
+            )
+          );
 
           setIsModalOpen(true);
           return true;
@@ -151,9 +181,11 @@ export default function MapView({
     let cancelled = false;
 
     const loadIcons = async () => {
-      const map = await loadEventTypeIconById();
+      const { iconById, nameById, unitById } = await loadEventTypeMetaById();
       if (cancelled) return;
-      setEventTypeIconById(map);
+      setEventTypeIconById(iconById);
+      setEventTypeNameById(nameById);
+      setEventTypeUnitById(unitById);
       eventLayerRef.current?.changed();
     };
 
