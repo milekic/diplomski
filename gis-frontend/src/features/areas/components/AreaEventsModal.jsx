@@ -111,9 +111,7 @@ useEffect(() => {
 
 
   
-  const isValid =
-    Object.keys(selectedEvents).length > 0 &&
-    Object.keys(errors).length === 0;
+  const isValid = Object.keys(errors).length === 0;
 
 
  const toggleEvent = (id) => {
@@ -262,7 +260,7 @@ useEffect(() => {
 
                     {Object.keys(selectedEvents).length === 0 && (
                       <div className="text-muted small mt-3">
-                        Odaberite bar jedan događaj.
+                        Nijedan događaj nije odabran. Potvrdom ćete ukloniti sva praćenja.
                       </div>
                     )}
                   </div>
