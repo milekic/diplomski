@@ -99,6 +99,9 @@ builder.Services.AddScoped<IAreaMonitorService, AreaMonitorService>();
 builder.Services.AddScoped<IEventTypeRepository, EventTypeRepository>();
 builder.Services.AddScoped<IEventTypeService, EventTypeService>();
 
+builder.Services.AddScoped<IMeasurementRepository, MeasurementRepository>();
+builder.Services.AddScoped<IMeasurementService, MeasurementService>();
+
 
 
 //za staticke podatke
@@ -158,3 +161,4 @@ app.MapHub<MonitoringHub>("/hubs/monitoring");
 
 
 app.Run();
+

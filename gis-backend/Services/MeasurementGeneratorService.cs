@@ -1,4 +1,4 @@
-﻿using gis_backend.Data;
+using gis_backend.Data;
 using gis_backend.DTOs.Realtime;
 using gis_backend.Hubs;
 using Microsoft.AspNetCore.SignalR;
@@ -91,16 +91,36 @@ namespace gis_backend.Services
 
                     var point = GenerateRandomPointInside(chosen.AreaGeom, chosen.Srid);
 
+                    var measuredAtUtc = DateTime.UtcNow;
+                    var isCritical = chosen.Threshold.HasValue && value > chosen.Threshold.Value;
+
                     var payload = new MeasurementRealtimeDto
                     {
                         AreaMonitorId = chosen.AreaMonitorId,
                         AreaId = chosen.AreaId,
                         EventTypeId = chosen.EventTypeId,
                         Value = value,
-                        MeasuredAtUtc = DateTime.UtcNow,
+                        MeasuredAtUtc = measuredAtUtc,
                         X = point.X,
                         Y = point.Y
                     };
+
+                    using (var saveScope = _scopeFactory.CreateScope())
+                    {
+                        var measurementService = saveScope.ServiceProvider.GetRequiredService<IMeasurementService>();
+                        await measurementService.CreateAsync(new MeasurementDto
+                        {
+                            AreaMonitorId = chosen.AreaMonitorId,
+                            AreaId = chosen.AreaId,
+                            EventTypeId = chosen.EventTypeId,
+                            Value = value,
+                            MeasuredAt = measuredAtUtc,
+                            IsCritical = isCritical,
+                            ThresholdAtThatTime = chosen.Threshold,
+                            X = point.X,
+                            Y = point.Y
+                        });
+                    }
 
                     await _hub.Clients.All.SendAsync("MeasurementUpdated", payload, stoppingToken);
 
@@ -156,3 +176,4 @@ namespace gis_backend.Services
         }
     }
 }
+
