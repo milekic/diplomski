@@ -104,7 +104,7 @@ namespace gis_backend.Services
                 }
                 catch (OperationCanceledException)
                 {
-                    // normal shutdown
+                    
                 }
                 catch (Exception ex)
                 {
@@ -129,10 +129,10 @@ namespace gis_backend.Services
 
         private Point GenerateRandomPointInside(Polygon polygon, int srid)
         {
-            // bounding box
+            
             var env = polygon.EnvelopeInternal;
 
-            // sigurnosno ograničenje da ne zapne u beskonačnoj petlji
+          
             const int maxAttempts = 2000;
 
             for (int i = 0; i < maxAttempts; i++)
@@ -142,12 +142,10 @@ namespace gis_backend.Services
 
                 var p = new Point(x, y) { SRID = srid };
 
-                // Covers je često bolji od Contains za tačke na ivici
                 if (polygon.Covers(p))
                     return p;
             }
 
-            // fallback (ako je poligon “tanak” ili komplikovan)
             var fallback = polygon.Centroid;
             fallback.SRID = srid;
             return fallback;
