@@ -3,6 +3,7 @@ using gis_backend.DTOs.Realtime;
 using gis_backend.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using NetTopologySuite.Geometries;
 
 namespace gis_backend.Services
@@ -12,16 +13,25 @@ namespace gis_backend.Services
         private readonly IHubContext<MonitoringHub> _hub;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<MeasurementGeneratorService> _logger;
+        private readonly TimeSpan _generationInterval;
         private readonly Random _rnd = new();
 
         public MeasurementGeneratorService(
             IHubContext<MonitoringHub> hub,
             IServiceScopeFactory scopeFactory,
-            ILogger<MeasurementGeneratorService> logger)
+            ILogger<MeasurementGeneratorService> logger,
+            IConfiguration configuration)
         {
             _hub = hub;
             _scopeFactory = scopeFactory;
             _logger = logger;
+
+            var configuredSeconds = configuration.GetValue<int?>(
+                "MeasurementGenerator:GenerationIntervalSeconds"
+            );
+            var intervalSeconds = configuredSeconds.GetValueOrDefault(10);
+            if (intervalSeconds <= 0) intervalSeconds = 10;
+            _generationInterval = TimeSpan.FromSeconds(intervalSeconds);
         }
 
         private record MonitorGenItem(
@@ -71,7 +81,7 @@ namespace gis_backend.Services
 
                     if (cached.Count == 0)
                     {
-                        await Task.Delay(TimeSpan.FromSeconds(3), stoppingToken);
+                        await Task.Delay(_generationInterval, stoppingToken);
                         continue;
                     }
 
@@ -94,7 +104,7 @@ namespace gis_backend.Services
 
                     await _hub.Clients.All.SendAsync("MeasurementUpdated", payload, stoppingToken);
 
-                    await Task.Delay(TimeSpan.FromSeconds(3), stoppingToken);
+                    await Task.Delay(_generationInterval, stoppingToken);
                 }
                 catch (OperationCanceledException)
                 {
@@ -103,7 +113,7 @@ namespace gis_backend.Services
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Generator error.");
-                    await Task.Delay(TimeSpan.FromSeconds(3), stoppingToken);
+                    await Task.Delay(_generationInterval, stoppingToken);
                 }
             }
 
