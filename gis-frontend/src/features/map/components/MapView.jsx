@@ -19,61 +19,12 @@ import {
 } from "../../../shared/constants/mapConstants";
 
 import { createMonitoringConnection } from "../../../shared/realtime/monitoringConnection";
-import apiClient from "../../../shared/api/apiClient";
 import EventDetailsModal from "./EventDetailsModal";
-import { getActiveAreaMonitorsByAreaId } from "../../areas/components/areaMonitorsApi";
-
-function toFeatureCollection(geomGeoJson) {
-  if (!geomGeoJson) return null;
-
-  try {
-    const obj =
-      typeof geomGeoJson === "string"
-        ? JSON.parse(geomGeoJson)
-        : geomGeoJson;
-
-    if (obj?.type === "FeatureCollection" || obj?.type === "Feature")
-      return obj;
-
-    return {
-      type: "FeatureCollection",
-      features: [{ type: "Feature", geometry: obj, properties: {} }],
-    };
-  } catch {
-    return null;
-  }
-}
-
-const DEFAULT_ICON_URL =
-  "https://cdn-icons-png.flaticon.com/512/564/564619.png";
-
-function iconForEventTypeName(nameRaw) {
-  const name = (nameRaw || "").toLowerCase();
-
-  if (name.includes("poplav"))
-    return "https://cdn-icons-png.flaticon.com/512/1146/1146869.png";
-
-  if (
-    name.includes("temperatur") ||
-    name.includes("toplot") ||
-    name.includes("vruć") ||
-    name.includes("vruc")
-  )
-    return "https://cdn-icons-png.flaticon.com/512/4814/4814268.png";
-
-  if (name.includes("zemljotres") || name.includes("potres"))
-    return "https://cdn-icons-png.flaticon.com/512/814/814513.png";
-
-  if (
-    name.includes("odron") ||
-    name.includes("klizi") ||
-    name.includes("klizišt") ||
-    name.includes("klizist")
-  )
-    return "https://cdn-icons-png.flaticon.com/512/684/684908.png";
-
-  return DEFAULT_ICON_URL;
-}
+import { DEFAULT_ICON_URL } from "./eventIcons";
+import { toFeatureCollection } from "./geoJsonUtils";
+import { loadThresholdByAreaAndEvent } from "./thresholdUtils";
+import { loadEventTypeMetaById } from "./eventTypeIconUtils";
+import { buildSelectedEventDetails } from "./eventSelectionUtils";
 
 export default function MapView({
   selectedAreas = [],
@@ -92,14 +43,18 @@ export default function MapView({
   const eventSourceRef = useRef(new VectorSource());
   const styleCacheRef = useRef({});
 
-  // 🔥 SVI događaji se čuvaju ovdje
+  //  Svi događaji se čuvaju ovdje
   const [allEvents, setAllEvents] = useState([]);
   const [thresholdByAreaAndEvent, setThresholdByAreaAndEvent] = useState(
     {}
   );
 
   const [eventTypeIconById, setEventTypeIconById] = useState({});
+  const [eventTypeNameById, setEventTypeNameById] = useState({});
+  const [eventTypeUnitById, setEventTypeUnitById] = useState({});
   const eventTypeIconByIdRef = useRef(eventTypeIconById);
+  const eventTypeNameByIdRef = useRef(eventTypeNameById);
+  const eventTypeUnitByIdRef = useRef(eventTypeUnitById);
 
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -107,6 +62,14 @@ export default function MapView({
   useEffect(() => {
     eventTypeIconByIdRef.current = eventTypeIconById;
   }, [eventTypeIconById]);
+
+  useEffect(() => {
+    eventTypeNameByIdRef.current = eventTypeNameById;
+  }, [eventTypeNameById]);
+
+  useEffect(() => {
+    eventTypeUnitByIdRef.current = eventTypeUnitById;
+  }, [eventTypeUnitById]);
 
   const eventLayerRef = useRef(
     new VectorLayer({
@@ -144,6 +107,22 @@ export default function MapView({
     return [...selectedAreaIdSet];
   }, [selectedAreaIdSet]);
 
+  const areaNameById = useMemo(() => {
+    const map = {};
+    for (const a of selectedAreas) {
+      const id = Number(a.id ?? a.Id);
+      if (!Number.isFinite(id)) continue;
+      map[id] = a.name ?? a.Name ?? "-";
+    }
+    return map;
+  }, [selectedAreas]);
+
+  const areaNameByIdRef = useRef(areaNameById);
+
+  useEffect(() => {
+    areaNameByIdRef.current = areaNameById;
+  }, [areaNameById]);
+
   // ===== INIT MAP =====
   useEffect(() => {
     if (mapRef.current) return;
@@ -168,14 +147,15 @@ export default function MapView({
           const coords = feature.getGeometry().getCoordinates();
           const lonLat = toLonLat(coords);
 
-          setSelectedEvent({
-            areaId: feature.get("areaId"),
-            eventTypeId: feature.get("eventTypeId"),
-            value: feature.get("value"),
-            measuredAtUtc: feature.get("measuredAtUtc"),
-            x: lonLat?.[0],
-            y: lonLat?.[1],
-          });
+          setSelectedEvent(
+            buildSelectedEventDetails(
+              feature,
+              lonLat,
+              areaNameByIdRef.current,
+              eventTypeNameByIdRef.current,
+              eventTypeUnitByIdRef.current
+            )
+          );
 
           setIsModalOpen(true);
           return true;
@@ -198,26 +178,22 @@ export default function MapView({
 
   // ===== LOAD EVENT TYPES =====
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await apiClient.get("/eventtypes");
-        const list = Array.isArray(res.data) ? res.data : [];
+    let cancelled = false;
 
-        const map = {};
-        for (const et of list) {
-          const id = et.id ?? et.Id;
-          const name = et.name ?? et.Name;
-          if (id != null) {
-            map[Number(id)] = iconForEventTypeName(name);
-          }
-        }
+    const loadIcons = async () => {
+      const { iconById, nameById, unitById } = await loadEventTypeMetaById();
+      if (cancelled) return;
+      setEventTypeIconById(iconById);
+      setEventTypeNameById(nameById);
+      setEventTypeUnitById(unitById);
+      eventLayerRef.current?.changed();
+    };
 
-        setEventTypeIconById(map);
-        eventLayerRef.current?.changed();
-      } catch {
-        setEventTypeIconById({});
-      }
-    })();
+    loadIcons();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // ===== UPDATE POLYGONS =====
@@ -246,42 +222,8 @@ export default function MapView({
     let cancelled = false;
 
     const loadThresholds = async () => {
-      if (selectedAreaIds.length === 0) {
-        setThresholdByAreaAndEvent({});
-        return;
-      }
-
-      const rows = await Promise.all(
-        selectedAreaIds.map(async (areaId) => {
-          try {
-            const monitors = await getActiveAreaMonitorsByAreaId(areaId);
-            return { areaId, monitors: Array.isArray(monitors) ? monitors : [] };
-          } catch {
-            return { areaId, monitors: [] };
-          }
-        })
-      );
-
+      const next = await loadThresholdByAreaAndEvent(selectedAreaIds);
       if (cancelled) return;
-
-      const next = {};
-
-      for (const row of rows) {
-        for (const monitor of row.monitors) {
-          const eventTypeId = Number(
-            monitor.eventTypeId ?? monitor.EventTypeId
-          );
-          const threshold = Number(
-            monitor.threshold ?? monitor.Threshold
-          );
-
-          if (!Number.isFinite(eventTypeId) || !Number.isFinite(threshold))
-            continue;
-
-          next[`${row.areaId}-${eventTypeId}`] = threshold;
-        }
-      }
-
       setThresholdByAreaAndEvent(next);
     };
 
@@ -292,7 +234,7 @@ export default function MapView({
     };
   }, [selectedAreaIds]);
 
-  // 🔥 FILTRIRANJE EVENTA PREMA ČEKIRANIM OBLASTIMA
+  // FILTRIRANJE EVENTA PREMA ČEKIRANIM OBLASTIMA
   useEffect(() => {
     const source = eventSourceRef.current;
     source.clear();
@@ -341,7 +283,7 @@ export default function MapView({
         payload.eventTypeId ?? payload.EventTypeId
       );
 
-      // 🔥 Dodaj u React state (ne direktno na mapu)
+      // Dodaj u React state (ne direktno na mapu)
       setAllEvents((prev) => [
         ...prev,
         {
