@@ -40,5 +40,25 @@ namespace gis_backend.Repositories
                 })
                 .ToListAsync();
         }
+
+        public async Task<List<MeasurementDto>> GetByAreaIdAsync(int areaId)
+        {
+            return await _context.Measurements
+                .AsNoTracking()
+                .Where(m => m.AreaId == areaId)
+                .Select(m => new MeasurementDto
+                {
+                    AreaMonitorId = m.AreaMonitorId,
+                    AreaId = m.AreaId,
+                    EventTypeId = m.EventTypeId,
+                    Value = m.Value,
+                    MeasuredAt = m.MeasuredAt,
+                    IsCritical = m.IsCritical,
+                    ThresholdAtThatTime = m.ThresholdAtThatTime,
+                    X = m.Location.X,
+                    Y = m.Location.Y
+                })
+                .ToListAsync();
+        }
     }
 }

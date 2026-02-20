@@ -42,5 +42,10 @@ namespace gis_backend.Services
         {
             return _repo.GetAllAsync();
         }
+
+        public Task<List<MeasurementDto>> GetByAreaIdAsync(int areaId)
+        {
+            return _repo.GetByAreaIdAsync(areaId);
+        }
     }
 }

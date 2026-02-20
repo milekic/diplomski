@@ -7,5 +7,7 @@ namespace gis_backend.Services
         Task CreateAsync(MeasurementDto request);
 
         Task<List<MeasurementDto>> GetAllAsync();
+
+        Task<List<MeasurementDto>> GetByAreaIdAsync(int areaId);
     }
 }

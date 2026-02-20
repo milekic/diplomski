@@ -10,5 +10,7 @@ namespace gis_backend.Repositories
         Task SaveChangesAsync();
 
         Task<List<MeasurementDto>> GetAllAsync();
+
+        Task<List<MeasurementDto>> GetByAreaIdAsync(int areaId);
     }
 }

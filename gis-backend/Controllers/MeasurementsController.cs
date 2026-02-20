@@ -23,5 +23,13 @@ namespace gis_backend.Controllers
             var list = await _service.GetAllAsync();
             return Ok(list);
         }
+
+        // GET: api/measurements/area/5
+        [HttpGet("area/{areaId:int}")]
+        public async Task<IActionResult> GetByAreaId(int areaId)
+        {
+            var list = await _service.GetByAreaIdAsync(areaId);
+            return Ok(list);
+        }
     }
 }
