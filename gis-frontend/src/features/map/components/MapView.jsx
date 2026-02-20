@@ -22,6 +22,7 @@ import { createMonitoringConnection } from "../../../shared/realtime/monitoringC
 import apiClient from "../../../shared/api/apiClient";
 import EventDetailsModal from "./EventDetailsModal";
 import { getActiveAreaMonitorsByAreaId } from "../../areas/components/areaMonitorsApi";
+import { DEFAULT_ICON_URL, iconForEventTypeName } from "./eventIcons";
 
 function toFeatureCollection(geomGeoJson) {
   if (!geomGeoJson) return null;
@@ -44,37 +45,6 @@ function toFeatureCollection(geomGeoJson) {
   }
 }
 
-const DEFAULT_ICON_URL =
-  "https://cdn-icons-png.flaticon.com/512/564/564619.png";
-
-function iconForEventTypeName(nameRaw) {
-  const name = (nameRaw || "").toLowerCase();
-
-  if (name.includes("poplav"))
-    return "https://cdn-icons-png.flaticon.com/512/1146/1146869.png";
-
-  if (
-    name.includes("temperatur") ||
-    name.includes("toplot") ||
-    name.includes("vruć") ||
-    name.includes("vruc")
-  )
-    return "https://cdn-icons-png.flaticon.com/512/4814/4814268.png";
-
-  if (name.includes("zemljotres") || name.includes("potres"))
-    return "https://cdn-icons-png.flaticon.com/512/814/814513.png";
-
-  if (
-    name.includes("odron") ||
-    name.includes("klizi") ||
-    name.includes("klizišt") ||
-    name.includes("klizist")
-  )
-    return "https://cdn-icons-png.flaticon.com/512/684/684908.png";
-
-  return DEFAULT_ICON_URL;
-}
-
 export default function MapView({
   selectedAreas = [],
   eventVisibilityMode = "all",
@@ -92,7 +62,7 @@ export default function MapView({
   const eventSourceRef = useRef(new VectorSource());
   const styleCacheRef = useRef({});
 
-  // 🔥 SVI događaji se čuvaju ovdje
+  //  Svi događaji se čuvaju ovdje
   const [allEvents, setAllEvents] = useState([]);
   const [thresholdByAreaAndEvent, setThresholdByAreaAndEvent] = useState(
     {}

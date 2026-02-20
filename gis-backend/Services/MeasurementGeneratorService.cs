@@ -46,13 +46,11 @@ namespace gis_backend.Services
             {
                 try
                 {
-                    // refresh cache svakih 15-30s (po želji)
                     if (cached.Count == 0 || (DateTime.UtcNow - lastRefresh) > TimeSpan.FromSeconds(20))
                     {
                         using var scope = _scopeFactory.CreateScope();
                         var db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
 
-                        // Uzimamo sve aktivne monitore + pripadajući poligon + min/max iz EventType
                         cached = await db.AreaMonitors
                             .AsNoTracking()
                             .Where(m => m.ActiveTo == null)
@@ -77,16 +75,12 @@ namespace gis_backend.Services
                         continue;
                     }
 
-                    // 1) izaberi random aktivni monitor
                     var chosen = cached[_rnd.Next(cached.Count)];
 
-                    // 2) generiši vrijednost u opsegu min/max iz EventType
                     var value = GenerateValue(chosen.MinValue, chosen.MaxValue);
 
-                    // 3) generiši tačku unutar poligona
                     var point = GenerateRandomPointInside(chosen.AreaGeom, chosen.Srid);
 
-                    // 4) pošalji realtime payload
                     var payload = new MeasurementRealtimeDto
                     {
                         AreaMonitorId = chosen.AreaMonitorId,
