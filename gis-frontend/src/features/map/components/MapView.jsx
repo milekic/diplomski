@@ -19,31 +19,11 @@ import {
 } from "../../../shared/constants/mapConstants";
 
 import { createMonitoringConnection } from "../../../shared/realtime/monitoringConnection";
-import apiClient from "../../../shared/api/apiClient";
 import EventDetailsModal from "./EventDetailsModal";
-import { getActiveAreaMonitorsByAreaId } from "../../areas/components/areaMonitorsApi";
-import { DEFAULT_ICON_URL, iconForEventTypeName } from "./eventIcons";
-
-function toFeatureCollection(geomGeoJson) {
-  if (!geomGeoJson) return null;
-
-  try {
-    const obj =
-      typeof geomGeoJson === "string"
-        ? JSON.parse(geomGeoJson)
-        : geomGeoJson;
-
-    if (obj?.type === "FeatureCollection" || obj?.type === "Feature")
-      return obj;
-
-    return {
-      type: "FeatureCollection",
-      features: [{ type: "Feature", geometry: obj, properties: {} }],
-    };
-  } catch {
-    return null;
-  }
-}
+import { DEFAULT_ICON_URL } from "./eventIcons";
+import { toFeatureCollection } from "./geoJsonUtils";
+import { loadThresholdByAreaAndEvent } from "./thresholdUtils";
+import { loadEventTypeIconById } from "./eventTypeIconUtils";
 
 export default function MapView({
   selectedAreas = [],
@@ -168,26 +148,20 @@ export default function MapView({
 
   // ===== LOAD EVENT TYPES =====
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await apiClient.get("/eventtypes");
-        const list = Array.isArray(res.data) ? res.data : [];
+    let cancelled = false;
 
-        const map = {};
-        for (const et of list) {
-          const id = et.id ?? et.Id;
-          const name = et.name ?? et.Name;
-          if (id != null) {
-            map[Number(id)] = iconForEventTypeName(name);
-          }
-        }
+    const loadIcons = async () => {
+      const map = await loadEventTypeIconById();
+      if (cancelled) return;
+      setEventTypeIconById(map);
+      eventLayerRef.current?.changed();
+    };
 
-        setEventTypeIconById(map);
-        eventLayerRef.current?.changed();
-      } catch {
-        setEventTypeIconById({});
-      }
-    })();
+    loadIcons();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // ===== UPDATE POLYGONS =====
@@ -216,42 +190,8 @@ export default function MapView({
     let cancelled = false;
 
     const loadThresholds = async () => {
-      if (selectedAreaIds.length === 0) {
-        setThresholdByAreaAndEvent({});
-        return;
-      }
-
-      const rows = await Promise.all(
-        selectedAreaIds.map(async (areaId) => {
-          try {
-            const monitors = await getActiveAreaMonitorsByAreaId(areaId);
-            return { areaId, monitors: Array.isArray(monitors) ? monitors : [] };
-          } catch {
-            return { areaId, monitors: [] };
-          }
-        })
-      );
-
+      const next = await loadThresholdByAreaAndEvent(selectedAreaIds);
       if (cancelled) return;
-
-      const next = {};
-
-      for (const row of rows) {
-        for (const monitor of row.monitors) {
-          const eventTypeId = Number(
-            monitor.eventTypeId ?? monitor.EventTypeId
-          );
-          const threshold = Number(
-            monitor.threshold ?? monitor.Threshold
-          );
-
-          if (!Number.isFinite(eventTypeId) || !Number.isFinite(threshold))
-            continue;
-
-          next[`${row.areaId}-${eventTypeId}`] = threshold;
-        }
-      }
-
       setThresholdByAreaAndEvent(next);
     };
 
@@ -262,7 +202,7 @@ export default function MapView({
     };
   }, [selectedAreaIds]);
 
-  // 🔥 FILTRIRANJE EVENTA PREMA ČEKIRANIM OBLASTIMA
+  // FILTRIRANJE EVENTA PREMA ČEKIRANIM OBLASTIMA
   useEffect(() => {
     const source = eventSourceRef.current;
     source.clear();
@@ -311,7 +251,7 @@ export default function MapView({
         payload.eventTypeId ?? payload.EventTypeId
       );
 
-      // 🔥 Dodaj u React state (ne direktno na mapu)
+      // Dodaj u React state (ne direktno na mapu)
       setAllEvents((prev) => [
         ...prev,
         {
