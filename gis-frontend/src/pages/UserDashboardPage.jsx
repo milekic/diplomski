@@ -152,7 +152,7 @@ export default function UserDashboardPage() {
 
           <div
             className="border rounded position-relative bg-light flex-grow-1"
-            style={{ minHeight: 0 }}
+            style={{ minHeight: 0 ,maxHeight: "90%"}}
           >
             <button
               className="btn btn-sm btn-outline-secondary position-absolute"
@@ -185,7 +185,7 @@ export default function UserDashboardPage() {
             />
             <div
               className="border-start p-3 overflow-auto flex-shrink-0"
-              style={{ width: `${rightPanelWidth}px` }}
+              style={{ width: `${rightPanelWidth}px`, maxHeight: "95%" }}
             >
               <UserDashboardAreaDetailsPanel
                 area={selectedArea}
