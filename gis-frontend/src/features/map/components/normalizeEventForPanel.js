@@ -30,6 +30,20 @@ function normalizeMeasuredAtUtc(rawValue) {
   return null;
 }
 
+function normalizeIsCritical(rawValue) {
+  if (typeof rawValue === "boolean") return rawValue;
+  if (typeof rawValue === "number") return rawValue === 1;
+
+  if (typeof rawValue === "string") {
+    const trimmed = rawValue.trim().toLowerCase();
+    if (!trimmed) return false;
+    if (trimmed === "true" || trimmed === "1") return true;
+    if (trimmed === "false" || trimmed === "0") return false;
+  }
+
+  return false;
+}
+
 export function normalizeEventForPanel(eventItem, fallbackAreaId) {
   const areaId = Number(eventItem?.areaId ?? eventItem?.AreaId ?? fallbackAreaId);
   const eventTypeId = Number(eventItem?.eventTypeId ?? eventItem?.EventTypeId);
@@ -58,6 +72,7 @@ export function normalizeEventForPanel(eventItem, fallbackAreaId) {
   const measuredAtUtc = normalizeMeasuredAtUtc(measuredAtRaw);
   const unit = eventItem?.eventTypeUnit ?? eventItem?.EventTypeUnit ?? "";
   const backendEventTypeName = eventItem?.eventTypeName ?? eventItem?.EventTypeName;
+  const isCritical = normalizeIsCritical(eventItem?.isCritical ?? eventItem?.IsCritical);
 
   return {
     areaId,
@@ -66,6 +81,7 @@ export function normalizeEventForPanel(eventItem, fallbackAreaId) {
     measuredAtUtc,
     unit,
     backendEventTypeName,
+    isCritical,
   };
 }
 

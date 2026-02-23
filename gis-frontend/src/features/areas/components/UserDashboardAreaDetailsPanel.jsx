@@ -41,6 +41,7 @@ export default function UserDashboardAreaDetailsPanel({ area, measurements = [] 
   const [eventTypeFilter, setEventTypeFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [criticalOnly, setCriticalOnly] = useState(false);
 
   const areaId = Number(area?.id ?? area?.Id);
 
@@ -48,6 +49,7 @@ export default function UserDashboardAreaDetailsPanel({ area, measurements = [] 
     setEventTypeFilter("all");
     setDateFrom("");
     setDateTo("");
+    setCriticalOnly(false);
   }, [areaId]);
 
   const eventTypeOptions = useMemo(() => {
@@ -79,6 +81,10 @@ export default function UserDashboardAreaDetailsPanel({ area, measurements = [] 
         return false;
       }
 
+      if (criticalOnly && !measurement.isCritical) {
+        return false;
+      }
+
       if (!from && !to) return true;
 
       const measuredAt = new Date(measurement.measuredAtUtc);
@@ -88,14 +94,15 @@ export default function UserDashboardAreaDetailsPanel({ area, measurements = [] 
       if (to && measuredAt > to) return false;
       return true;
     });
-  }, [measurements, eventTypeFilter, dateFrom, dateTo]);
+  }, [measurements, eventTypeFilter, criticalOnly, dateFrom, dateTo]);
 
-  const hasActiveFilters = eventTypeFilter !== "all" || dateFrom || dateTo;
+  const hasActiveFilters = eventTypeFilter !== "all" || criticalOnly || dateFrom || dateTo;
 
   const clearFilters = () => {
     setEventTypeFilter("all");
     setDateFrom("");
     setDateTo("");
+    setCriticalOnly(false);
   };
 
   return (
@@ -154,6 +161,21 @@ export default function UserDashboardAreaDetailsPanel({ area, measurements = [] 
                       value={dateTo}
                       onChange={(event) => setDateTo(event.target.value)}
                     />
+                  </div>
+
+                  <div className="col-12">
+                    <div className="form-check mb-0">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        id="critical-only-filter"
+                        checked={criticalOnly}
+                        onChange={(event) => setCriticalOnly(event.target.checked)}
+                      />
+                      <label className="form-check-label small" htmlFor="critical-only-filter">
+                        Samo dogadjaji iznad kriticnog praga
+                      </label>
+                    </div>
                   </div>
 
                   {hasActiveFilters && (

@@ -1,4 +1,4 @@
-//Spaja live i database događaje
+// Spaja live i database dogadjaje
 import { normalizeEventForPanel } from "./normalizeEventForPanel";
 
 function parseMeasuredAtMs(measuredAtUtc) {
@@ -43,10 +43,13 @@ export function buildPanelMeasurements({
 
       return {
         id: `${areaId}-${item.eventTypeId}-${item.measuredAtUtc ?? "no-time"}-${index}`,
+        areaId,
+        eventTypeId: item.eventTypeId,
         eventTypeName: item.backendEventTypeName ?? typeNameFromMeta ?? "-",
         value: item.value,
         unit: item.unit || unitFromMeta,
         measuredAtUtc: item.measuredAtUtc,
+        isCritical: Boolean(item.isCritical),
       };
     })
     .sort((a, b) => {
