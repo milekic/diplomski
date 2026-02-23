@@ -200,6 +200,24 @@ export default function MapView({
     },
   });
 
+  useEffect(() => {
+    const target = mapDivRef.current;
+    if (!target) return;
+
+    const syncMapSize = () => {
+      mapRef.current?.updateSize();
+    };
+
+    const observer = new ResizeObserver(syncMapSize);
+    observer.observe(target);
+    window.addEventListener("resize", syncMapSize);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", syncMapSize);
+    };
+  }, []);
+
   // ===== LOAD EVENT TYPES =====
   useEffect(() => {
     let cancelled = false;

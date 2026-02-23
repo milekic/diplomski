@@ -3,6 +3,7 @@ import Map from "ol/Map";
 import View from "ol/View";
 import TileLayer from "ol/layer/Tile";
 import OSM from "ol/source/OSM";
+import { defaults as defaultInteractions } from "ol/interaction/defaults";
 import { fromLonLat, toLonLat } from "ol/proj";
 
 export default function useMapInit({
@@ -22,6 +23,7 @@ export default function useMapInit({
     const map = new Map({
       target: mapDivRef.current,
       layers: [new TileLayer({ source: new OSM() }), vectorLayer, eventLayer],
+      interactions: defaultInteractions({ doubleClickZoom: false }),
       view: new View({
         center: fromLonLat(centerLonLat),
         zoom,
