@@ -14,6 +14,7 @@ export default function UserDashboardPage() {
   // Checked area ids from LayersTree
   const [selectedAreaIds, setSelectedAreaIds] = useState([]);
   const [selectedArea, setSelectedArea] = useState(null);
+  const [areaMeasurements, setAreaMeasurements] = useState([]);
 
   // Load areas once
   useEffect(() => {
@@ -34,7 +35,7 @@ export default function UserDashboardPage() {
     return areas.filter((area) => ids.has(Number(area.id ?? area.Id)));
   }, [areas, selectedAreaIds]);
 
-  // Clear right panel selection if that area is no longer visible/selected
+  // Keep selected area valid after LayersTree changes
   useEffect(() => {
     if (!selectedArea) return;
 
@@ -45,6 +46,7 @@ export default function UserDashboardPage() {
 
     if (!stillVisible) {
       setSelectedArea(null);
+      setAreaMeasurements([]);
     }
   }, [selectedArea, selectedAreas]);
 
@@ -59,7 +61,7 @@ export default function UserDashboardPage() {
         {/* Map Section */}
         <div className={`${isExpanded ? "col-10" : "col-8"} p-3 d-flex flex-column`}>
           <div className="d-flex align-items-center gap-3 mb-2">
-            <span className="fw-semibold small mb-0">Prikaz događaja:</span>
+            <span className="fw-semibold small mb-0">Prikaz dogadjaja:</span>
 
             <div className="form-check form-check-inline mb-0">
               <input
@@ -71,7 +73,7 @@ export default function UserDashboardPage() {
                 onChange={() => setEventVisibilityMode("all")}
               />
               <label className="form-check-label small" htmlFor="event-mode-all">
-                Svi događaji
+                Svi dogadjaji
               </label>
             </div>
 
@@ -85,7 +87,7 @@ export default function UserDashboardPage() {
                 onChange={() => setEventVisibilityMode("criticalOnly")}
               />
               <label className="form-check-label small" htmlFor="event-mode-critical">
-                Samo kritični
+                Samo kriticni
               </label>
             </div>
           </div>
@@ -99,7 +101,7 @@ export default function UserDashboardPage() {
               style={{ top: "10px", right: "10px", zIndex: 1000 }}
               onClick={() => setIsExpanded(!isExpanded)}
             >
-              {isExpanded ? "⮜" : "⮞"}
+              {isExpanded ? "<<" : ">>"}
             </button>
 
             {/* Map View */}
@@ -107,16 +109,18 @@ export default function UserDashboardPage() {
               selectedAreas={selectedAreas}
               eventVisibilityMode={eventVisibilityMode}
               onAreaSelect={setSelectedArea}
+              onAreaMeasurementsChange={setAreaMeasurements}
             />
           </div>
         </div>
 
         {/* Right Panel */}
         {!isExpanded && (
-          <div className="col-2 border-start p-3 overflow-auto"
-          style={{ height: "94%" }}
-          >
-            <UserDashboardAreaDetailsPanel area={selectedArea} />
+          <div className="col-2 border-start p-3 overflow-auto" style={{ height: "94%" }}>
+            <UserDashboardAreaDetailsPanel
+              area={selectedArea}
+              measurements={areaMeasurements}
+            />
           </div>
         )}
       </div>

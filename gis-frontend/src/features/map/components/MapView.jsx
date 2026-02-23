@@ -23,6 +23,7 @@ import EventDetailsModal from "./EventDetailsModal";
 import { DEFAULT_ICON_URL } from "./eventIcons";
 import { toFeatureCollection } from "./geoJsonUtils";
 import { loadThresholdByAreaAndEvent } from "./thresholdUtils";
+import { loadAreaMeasurements } from "./areaMeasurementsApi";
 import { loadEventTypeMetaById } from "./eventTypeIconUtils";
 import { buildSelectedEventDetails } from "./eventSelectionUtils";
 
@@ -35,10 +36,12 @@ export default function MapView({
   selectedAreas = [],
   eventVisibilityMode = "all",
   onAreaSelect,
+  onAreaMeasurementsChange,
 }) {
   const mapDivRef = useRef(null);
   const mapRef = useRef(null);
   const onAreaSelectRef = useRef(onAreaSelect);
+  const onAreaMeasurementsChangeRef = useRef(onAreaMeasurementsChange);
 
   const vectorSourceRef = useRef(new VectorSource());
   const vectorLayerRef = useRef(
@@ -50,11 +53,12 @@ export default function MapView({
   const eventSourceRef = useRef(new VectorSource());
   const styleCacheRef = useRef({});
 
-  //  Svi događaji se čuvaju ovdje
+  // All events are stored here
   const [allEvents, setAllEvents] = useState([]);
-  const [thresholdByAreaAndEvent, setThresholdByAreaAndEvent] = useState(
-    {}
-  );
+  const allEventsRef = useRef(allEvents);
+  const databaseEventsByAreaIdRef = useRef({});
+  const panelSnapshotTokenRef = useRef(0);
+  const [thresholdByAreaAndEvent, setThresholdByAreaAndEvent] = useState({});
 
   const [eventTypeIconById, setEventTypeIconById] = useState({});
   const [eventTypeNameById, setEventTypeNameById] = useState({});
@@ -71,6 +75,10 @@ export default function MapView({
   }, [eventTypeIconById]);
 
   useEffect(() => {
+    allEventsRef.current = allEvents;
+  }, [allEvents]);
+
+  useEffect(() => {
     eventTypeNameByIdRef.current = eventTypeNameById;
   }, [eventTypeNameById]);
 
@@ -83,9 +91,7 @@ export default function MapView({
       source: eventSourceRef.current,
       style: (feature) => {
         const eventTypeId = Number(feature.get("eventTypeId"));
-        const iconUrl =
-          eventTypeIconByIdRef.current?.[eventTypeId] ||
-          DEFAULT_ICON_URL;
+        const iconUrl = eventTypeIconByIdRef.current?.[eventTypeId] || DEFAULT_ICON_URL;
 
         if (!styleCacheRef.current[iconUrl]) {
           styleCacheRef.current[iconUrl] = new Style({
@@ -103,11 +109,7 @@ export default function MapView({
   );
 
   const selectedAreaIdSet = useMemo(() => {
-    return new Set(
-      selectedAreas
-        .map((a) => Number(a.id ?? a.Id))
-        .filter(Number.isFinite)
-    );
+    return new Set(selectedAreas.map((a) => Number(a.id ?? a.Id)).filter(Number.isFinite));
   }, [selectedAreas]);
 
   const selectedAreaIds = useMemo(() => {
@@ -149,24 +151,182 @@ export default function MapView({
     onAreaSelectRef.current = onAreaSelect;
   }, [onAreaSelect]);
 
+  useEffect(() => {
+    onAreaMeasurementsChangeRef.current = onAreaMeasurementsChange;
+  }, [onAreaMeasurementsChange]);
+
+  const parseMeasuredAtMs = (measuredAtUtc) => {
+    if (!measuredAtUtc) return null;
+    const ms = Date.parse(measuredAtUtc);
+    return Number.isFinite(ms) ? ms : null;
+  };
+
+  const normalizeMeasuredAtUtc = (rawValue) => {
+    if (rawValue == null) return null;
+
+    const toIsoFromNumber = (numeric) => {
+      if (!Number.isFinite(numeric)) return null;
+      const ms = numeric > 1e12 ? numeric : numeric * 1000;
+      const date = new Date(ms);
+      return Number.isNaN(date.getTime()) ? null : date.toISOString();
+    };
+
+    if (typeof rawValue === "number") {
+      return toIsoFromNumber(rawValue);
+    }
+
+    if (typeof rawValue === "string") {
+      const trimmed = rawValue.trim();
+      if (!trimmed) return null;
+
+      if (/^\d+$/.test(trimmed)) {
+        return toIsoFromNumber(Number(trimmed));
+      }
+
+      const parsed = Date.parse(trimmed);
+      if (Number.isFinite(parsed)) {
+        return new Date(parsed).toISOString();
+      }
+    }
+
+    return null;
+  };
+
+  const normalizeEventForPanel = (eventItem, fallbackAreaId) => {
+    const areaId = Number(eventItem?.areaId ?? eventItem?.AreaId ?? fallbackAreaId);
+    const eventTypeId = Number(eventItem?.eventTypeId ?? eventItem?.EventTypeId);
+    const value =
+      eventItem?.value ??
+      eventItem?.Value ??
+      eventItem?.measuredValue ??
+      eventItem?.MeasuredValue ??
+      null;
+    const measuredAtRaw =
+      eventItem?.measuredAtUtc ??
+      eventItem?.MeasuredAtUtc ??
+      eventItem?.measuredAt ??
+      eventItem?.MeasuredAt ??
+      eventItem?.measurementTimeUtc ??
+      eventItem?.MeasurementTimeUtc ??
+      eventItem?.measurementTime ??
+      eventItem?.MeasurementTime ??
+      eventItem?.timeOfMeasurement ??
+      eventItem?.TimeOfMeasurement ??
+      eventItem?.timestamp ??
+      eventItem?.Timestamp ??
+      eventItem?.createdAt ??
+      eventItem?.CreatedAt ??
+      null;
+    const measuredAtUtc = normalizeMeasuredAtUtc(measuredAtRaw);
+    const unit = eventItem?.eventTypeUnit ?? eventItem?.EventTypeUnit ?? "";
+    const backendEventTypeName = eventItem?.eventTypeName ?? eventItem?.EventTypeName;
+
+    return {
+      areaId,
+      eventTypeId,
+      value,
+      measuredAtUtc,
+      unit,
+      backendEventTypeName,
+    };
+  };
+
+  const buildPanelMeasurements = ({ areaId, liveEvents = [], databaseEvents = [], cutoffMs }) => {
+    if (!Number.isFinite(areaId)) return [];
+
+    const merged = [...databaseEvents, ...liveEvents].map((eventItem) =>
+      normalizeEventForPanel(eventItem, areaId)
+    );
+
+    const unique = [];
+    const seen = new Set();
+
+    for (const item of merged) {
+      const measuredMs = parseMeasuredAtMs(item.measuredAtUtc);
+      if (Number.isFinite(cutoffMs) && measuredMs != null && measuredMs > cutoffMs) {
+        continue;
+      }
+
+      const key = `${item.areaId}|${item.eventTypeId}|${item.value}|${item.measuredAtUtc ?? "-"}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      unique.push(item);
+    }
+
+    return unique
+      .map((item, index) => {
+        const typeNameFromMeta = eventTypeNameByIdRef.current?.[item.eventTypeId];
+        const unitFromMeta = eventTypeUnitByIdRef.current?.[item.eventTypeId] ?? "";
+        return {
+          id: `${areaId}-${item.eventTypeId}-${item.measuredAtUtc ?? "no-time"}-${index}`,
+          eventTypeName: item.backendEventTypeName ?? typeNameFromMeta ?? "-",
+          value: item.value,
+          unit: item.unit || unitFromMeta,
+          measuredAtUtc: item.measuredAtUtc,
+        };
+      })
+      .sort((a, b) => {
+        const timeA = a.measuredAtUtc ? Date.parse(a.measuredAtUtc) : 0;
+        const timeB = b.measuredAtUtc ? Date.parse(b.measuredAtUtc) : 0;
+        return timeB - timeA;
+      });
+  };
+
+  const getDatabaseEventsForArea = async (areaId) => {
+    if (Object.prototype.hasOwnProperty.call(databaseEventsByAreaIdRef.current, areaId)) {
+      return databaseEventsByAreaIdRef.current[areaId];
+    }
+
+    const rows = await loadAreaMeasurements(areaId);
+    const normalizedRows = Array.isArray(rows) ? rows : [];
+    databaseEventsByAreaIdRef.current[areaId] = normalizedRows;
+    return normalizedRows;
+  };
+
+  const showAreaSnapshotMeasurements = async (area) => {
+    const areaId = Number(area?.id ?? area?.Id);
+    if (!Number.isFinite(areaId)) return;
+
+    const snapshotCutoffMs = Date.now();
+    const snapshotLiveEvents = allEventsRef.current
+      .filter((eventItem) => Number(eventItem.areaId) === areaId)
+      .map((eventItem) => ({ ...eventItem }));
+
+    const snapshotToken = ++panelSnapshotTokenRef.current;
+
+    const liveOnlyMeasurements = buildPanelMeasurements({
+      areaId,
+      liveEvents: snapshotLiveEvents,
+      databaseEvents: [],
+      cutoffMs: snapshotCutoffMs,
+    });
+    onAreaMeasurementsChangeRef.current?.(liveOnlyMeasurements);
+
+    const databaseEvents = await getDatabaseEventsForArea(areaId);
+    if (snapshotToken !== panelSnapshotTokenRef.current) return;
+
+    const fullSnapshotMeasurements = buildPanelMeasurements({
+      areaId,
+      liveEvents: snapshotLiveEvents,
+      databaseEvents,
+      cutoffMs: snapshotCutoffMs,
+    });
+    onAreaMeasurementsChangeRef.current?.(fullSnapshotMeasurements);
+  };
+
   // ===== INIT MAP =====
   useEffect(() => {
     if (mapRef.current) return;
 
     const map = new Map({
       target: mapDivRef.current,
-      layers: [
-        new TileLayer({ source: new OSM() }),
-        vectorLayerRef.current,
-        eventLayerRef.current,
-      ],
+      layers: [new TileLayer({ source: new OSM() }), vectorLayerRef.current, eventLayerRef.current],
       view: new View({
         center: fromLonLat(DEFAULT_CENTER_LONLAT),
         zoom: DEFAULT_ZOOM,
       }),
     });
 
-    // Klik na ikonicu
     map.on("singleclick", (evt) => {
       let clickedArea = null;
 
@@ -200,6 +360,7 @@ export default function MapView({
 
       if (clickedArea) {
         onAreaSelectRef.current?.(clickedArea);
+        showAreaSnapshotMeasurements(clickedArea);
       }
     });
 
@@ -274,7 +435,7 @@ export default function MapView({
     };
   }, [selectedAreaIds]);
 
-  // FILTRIRANJE EVENTA PREMA ČEKIRANIM OBLASTIMA
+  // Filter events by checked areas and critical mode
   useEffect(() => {
     const source = eventSourceRef.current;
     source.clear();
@@ -293,9 +454,7 @@ export default function MapView({
       .filter((e) => selectedAreaIdSet.has(e.areaId))
       .filter((e) => (eventVisibilityMode === "criticalOnly" ? isCritical(e) : true))
       .forEach((e) => {
-        const point = new Point(
-          fromLonLat([Number(e.x), Number(e.y)])
-        );
+        const point = new Point(fromLonLat([Number(e.x), Number(e.y)]));
 
         const feature = new Feature({ geometry: point });
 
@@ -320,19 +479,24 @@ export default function MapView({
       const y = payload.y ?? payload.Y;
       if (x == null || y == null) return;
 
-      const eventTypeId = Number(
-        payload.eventTypeId ?? payload.EventTypeId
-      );
+      const eventTypeId = Number(payload.eventTypeId ?? payload.EventTypeId);
 
-      // Dodaj u React state (ne direktno na mapu)
       setAllEvents((prev) => [
         ...prev,
         {
           areaId,
           eventTypeId,
           value: payload.value ?? payload.Value,
-          measuredAtUtc:
-            payload.measuredAtUtc ?? payload.MeasuredAtUtc,
+          measuredAtUtc: normalizeMeasuredAtUtc(
+            payload.measuredAtUtc ??
+              payload.MeasuredAtUtc ??
+              payload.measuredAt ??
+              payload.MeasuredAt ??
+              payload.measurementTimeUtc ??
+              payload.MeasurementTimeUtc ??
+              payload.timestamp ??
+              payload.Timestamp
+          ),
           x: Number(x),
           y: Number(y),
         },
@@ -358,16 +522,9 @@ export default function MapView({
 
   return (
     <>
-      <div
-        ref={mapDivRef}
-        style={{ width: "100%", height: "100%" }}
-      />
+      <div ref={mapDivRef} style={{ width: "100%", height: "100%" }} />
 
-      <EventDetailsModal
-        show={isModalOpen}
-        event={selectedEvent}
-        onClose={() => setIsModalOpen(false)}
-      />
+      <EventDetailsModal show={isModalOpen} event={selectedEvent} onClose={() => setIsModalOpen(false)} />
     </>
   );
 }
