@@ -26,6 +26,11 @@ import { loadThresholdByAreaAndEvent } from "./thresholdUtils";
 import { loadEventTypeMetaById } from "./eventTypeIconUtils";
 import { buildSelectedEventDetails } from "./eventSelectionUtils";
 
+function isExpectedNegotiationStop(error) {
+  const message = String(error?.message ?? error ?? "").toLowerCase();
+  return message.includes("stopped during negotiation");
+}
+
 export default function MapView({
   selectedAreas = [],
   eventVisibilityMode = "all",
@@ -306,8 +311,9 @@ export default function MapView({
   // ===== SIGNALR =====
   useEffect(() => {
     const connection = createMonitoringConnection();
+    let disposed = false;
 
-    connection.on("MeasurementUpdated", (payload) => {
+    const onMeasurementUpdated = (payload) => {
       const areaId = Number(payload.areaId ?? payload.AreaId);
 
       const x = payload.x ?? payload.X;
@@ -331,14 +337,22 @@ export default function MapView({
           y: Number(y),
         },
       ]);
+    };
+
+    connection.on("MeasurementUpdated", onMeasurementUpdated);
+
+    const startPromise = connection.start().catch((error) => {
+      if (disposed && isExpectedNegotiationStop(error)) return;
+      console.error("SignalR error", error);
     });
 
-    connection.start().catch(() =>
-      console.error("SignalR error")
-    );
-
     return () => {
-      connection.stop();
+      disposed = true;
+      connection.off("MeasurementUpdated", onMeasurementUpdated);
+
+      Promise.resolve(startPromise).finally(() => {
+        connection.stop().catch(() => {});
+      });
     };
   }, []);
 
