@@ -113,7 +113,9 @@ export default function UserDashboardPage() {
 
         {/* Right Panel */}
         {!isExpanded && (
-          <div className="col-2 border-start p-3 overflow-auto">
+          <div className="col-2 border-start p-3 overflow-auto"
+          style={{ height: "94%" }}
+          >
             <UserDashboardAreaDetailsPanel area={selectedArea} />
           </div>
         )}
