@@ -173,7 +173,7 @@ export default function UserDashboardAreaDetailsPanel({ area, measurements = [] 
                         onChange={(event) => setCriticalOnly(event.target.checked)}
                       />
                       <label className="form-check-label small" htmlFor="critical-only-filter">
-                        Samo dogadjaji iznad kriticnog praga
+                        Samo dogadjaji iznad kritičnog praga
                       </label>
                     </div>
                   </div>

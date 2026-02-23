@@ -70,7 +70,7 @@ export default function AppNavbar({ userLabel, role, onLogout }) {
             onClick={onLogout}
             type="button"
           >
-            Logout
+            Odjavi se
           </button>
 
         </div>

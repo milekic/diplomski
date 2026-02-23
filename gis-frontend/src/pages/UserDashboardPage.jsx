@@ -145,7 +145,7 @@ export default function UserDashboardPage() {
                 onChange={() => setEventVisibilityMode("criticalOnly")}
               />
               <label className="form-check-label small" htmlFor="event-mode-critical">
-                Samo kriticni
+                Samo kritični
               </label>
             </div>
           </div>
