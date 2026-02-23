@@ -1,12 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import Map from "ol/Map";
-import View from "ol/View";
-import TileLayer from "ol/layer/Tile";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
-import OSM from "ol/source/OSM";
 import GeoJSON from "ol/format/GeoJSON";
-import { fromLonLat, toLonLat } from "ol/proj";
+import { fromLonLat } from "ol/proj";
 import { Style, Icon } from "ol/style";
 import Point from "ol/geom/Point";
 import Feature from "ol/Feature";
@@ -28,6 +24,7 @@ import { loadEventTypeMetaById } from "./eventTypeIconUtils";
 import { buildSelectedEventDetails } from "./eventSelectionUtils";
 import { normalizeMeasuredAtUtc } from "./normalizeEventForPanel";
 import { showAreaSnapshotMeasurements } from "./showAreaSnapshotMeasurements";
+import useMapInit from "./useMapInit";
 
 function isExpectedNegotiationStop(error) {
   const message = String(error?.message ?? error ?? "").toLowerCase();
@@ -168,76 +165,40 @@ export default function MapView({
     return normalizedRows;
   };
 
-  // ===== INIT MAP =====
-  useEffect(() => {
-    if (mapRef.current) return;
-
-    const map = new Map({
-      target: mapDivRef.current,
-      layers: [new TileLayer({ source: new OSM() }), vectorLayerRef.current, eventLayerRef.current],
-      view: new View({
-        center: fromLonLat(DEFAULT_CENTER_LONLAT),
-        zoom: DEFAULT_ZOOM,
-      }),
-    });
-
-    map.on("singleclick", (evt) => {
-      let clickedArea = null;
-
-      map.forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
-        if (layer === eventLayerRef.current) {
-          const coords = feature.getGeometry().getCoordinates();
-          const lonLat = toLonLat(coords);
-
-          setSelectedEvent(
-            buildSelectedEventDetails(
-              feature,
-              lonLat,
-              areaNameByIdRef.current,
-              eventTypeNameByIdRef.current,
-              eventTypeUnitByIdRef.current
-            )
-          );
-
-          setIsModalOpen(true);
-          return true;
-        }
-
-        if (layer === vectorLayerRef.current) {
-          const areaId = Number(feature.get("areaId"));
-          if (!Number.isFinite(areaId)) return false;
-          clickedArea = selectedAreaByIdRef.current?.[areaId] ?? null;
-        }
-
-        return false;
+  //map init
+  useMapInit({
+    mapRef,
+    mapDivRef,
+    vectorLayer: vectorLayerRef.current,
+    eventLayer: eventLayerRef.current,
+    centerLonLat: DEFAULT_CENTER_LONLAT,
+    zoom: DEFAULT_ZOOM,
+    selectedAreaByIdRef,
+    onEventFeatureClick: (feature, lonLat) => {
+      setSelectedEvent(
+        buildSelectedEventDetails(
+          feature,
+          lonLat,
+          areaNameByIdRef.current,
+          eventTypeNameByIdRef.current,
+          eventTypeUnitByIdRef.current
+        )
+      );
+      setIsModalOpen(true);
+    },
+    onAreaFeatureClick: (clickedArea) => {
+      onAreaSelectRef.current?.(clickedArea);
+      showAreaSnapshotMeasurements({
+        area: clickedArea,
+        allEventsRef,
+        panelSnapshotTokenRef,
+        getDatabaseEventsForArea,
+        eventTypeNameByIdRef,
+        eventTypeUnitByIdRef,
+        onAreaMeasurementsChangeRef,
       });
-
-      if (clickedArea) {
-        onAreaSelectRef.current?.(clickedArea);
-        showAreaSnapshotMeasurements({
-          area: clickedArea,
-          allEventsRef,
-          panelSnapshotTokenRef,
-          getDatabaseEventsForArea,
-          eventTypeNameByIdRef,
-          eventTypeUnitByIdRef,
-          onAreaMeasurementsChangeRef,
-        });
-      }
-    });
-
-    map.on("pointermove", function (e) {
-      const hit = map.hasFeatureAtPixel(e.pixel);
-      map.getTargetElement().style.cursor = hit ? "pointer" : "";
-    });
-
-    mapRef.current = map;
-
-    return () => {
-      map.setTarget(null);
-      mapRef.current = null;
-    };
-  }, []);
+    },
+  });
 
   // ===== LOAD EVENT TYPES =====
   useEffect(() => {
