@@ -1,48 +1,62 @@
 import { useEffect, useMemo, useState } from "react";
 import LayersTree from "../features/map/components/LayersTree";
 import MapView from "../features/map/components/MapView";
-import { getVisibleAreas } from "../features/map/components/visibleAreasApi"; // ako ti je druga putanja, prilagodi
+import UserDashboardAreaDetailsPanel from "../features/areas/components/UserDashboardAreaDetailsPanel";
+import { getVisibleAreas } from "../features/map/components/visibleAreasApi";
 
 export default function UserDashboardPage() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [eventVisibilityMode, setEventVisibilityMode] = useState("all");
 
-  // sve oblasti (moje + globalne)
+  // All visible areas (owned + global)
   const [areas, setAreas] = useState([]);
 
-  // čekirani ID-evi iz tree-a
+  // Checked area ids from LayersTree
   const [selectedAreaIds, setSelectedAreaIds] = useState([]);
+  const [selectedArea, setSelectedArea] = useState(null);
 
-  // učitaj oblasti jednom
+  // Load areas once
   useEffect(() => {
     (async () => {
       try {
         const data = await getVisibleAreas();
         setAreas(Array.isArray(data) ? data : []);
       } catch (e) {
-        console.error("Ne mogu učitati oblasti");
+        console.error("Unable to load visible areas");
         setAreas([]);
       }
     })();
   }, []);
 
-  // izračunaj selektovane oblasti 
+  // Build selected areas for map rendering
   const selectedAreas = useMemo(() => {
-    const setIds = new Set(selectedAreaIds);
-    return areas.filter((a) => setIds.has(a.id ?? a.Id));
+    const ids = new Set(selectedAreaIds.map((id) => Number(id)));
+    return areas.filter((area) => ids.has(Number(area.id ?? area.Id)));
   }, [areas, selectedAreaIds]);
 
+  // Clear right panel selection if that area is no longer visible/selected
+  useEffect(() => {
+    if (!selectedArea) return;
+
+    const selectedId = Number(selectedArea.id ?? selectedArea.Id);
+    const stillVisible = selectedAreas.some(
+      (area) => Number(area.id ?? area.Id) === selectedId
+    );
+
+    if (!stillVisible) {
+      setSelectedArea(null);
+    }
+  }, [selectedArea, selectedAreas]);
+
   return (
-    <div className="container-fluid vh-100 d-flex flex-column">        
-      {/* ===== MAIN CONTENT ===== */}
+    <div className="container-fluid vh-100 d-flex flex-column">
       <div className="row flex-grow-1 overflow-hidden">
-        {/* ===== LEFT SIDEBAR ===== */}
+        {/* Left Sidebar */}
         <div className="col-2 border-end p-3 overflow-auto">
-          {/* umjesto console.log, setuj state */}
           <LayersTree onLayersChange={setSelectedAreaIds} />
         </div>
 
-        {/* ===== MAP AREA ===== */}
+        {/* Map Section */}
         <div className={`${isExpanded ? "col-10" : "col-8"} p-3 d-flex flex-column`}>
           <div className="d-flex align-items-center gap-3 mb-2">
             <span className="fw-semibold small mb-0">Prikaz događaja:</span>
@@ -80,7 +94,6 @@ export default function UserDashboardPage() {
             className="border rounded position-relative bg-light"
             style={{ height: "90%" }}
           >
-            {/* Toggle dugme */}
             <button
               className="btn btn-sm btn-outline-secondary position-absolute"
               style={{ top: "10px", right: "10px", zIndex: 1000 }}
@@ -89,40 +102,19 @@ export default function UserDashboardPage() {
               {isExpanded ? "⮜" : "⮞"}
             </button>
 
-            {/* proslijedi selektovane oblasti */}
+            {/* Map View */}
             <MapView
               selectedAreas={selectedAreas}
               eventVisibilityMode={eventVisibilityMode}
+              onAreaSelect={setSelectedArea}
             />
           </div>
         </div>
 
-        {/* ===== RIGHT PANEL ===== */}
+        {/* Right Panel */}
         {!isExpanded && (
           <div className="col-2 border-start p-3 overflow-auto">
-            <h6>Detalji oblasti</h6>
-
-            <div className="mb-3">
-              <strong>Oblast:</strong> Nije selektovana
-            </div>
-
-            <div className="mb-2 p-2 border rounded">
-              <p className="mb-1"><strong>Poplave</strong></p>
-              <small>Prag: -</small><br />
-              <small>Trenutna vrijednost: -</small>
-            </div>
-
-            <div className="mb-2 p-2 border rounded">
-              <p className="mb-1"><strong>Temperatura</strong></p>
-              <small>Prag: -</small><br />
-              <small>Trenutna vrijednost: -</small>
-            </div>
-
-            <div className="d-grid gap-2 mt-3">
-              <button className="btn btn-outline-dark btn-sm">
-                PDF izvještaj
-              </button>
-            </div>
+            <UserDashboardAreaDetailsPanel area={selectedArea} />
           </div>
         )}
       </div>

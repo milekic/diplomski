@@ -29,9 +29,11 @@ import { buildSelectedEventDetails } from "./eventSelectionUtils";
 export default function MapView({
   selectedAreas = [],
   eventVisibilityMode = "all",
+  onAreaSelect,
 }) {
   const mapDivRef = useRef(null);
   const mapRef = useRef(null);
+  const onAreaSelectRef = useRef(onAreaSelect);
 
   const vectorSourceRef = useRef(new VectorSource());
   const vectorLayerRef = useRef(
@@ -117,11 +119,30 @@ export default function MapView({
     return map;
   }, [selectedAreas]);
 
+  const selectedAreaById = useMemo(() => {
+    const map = {};
+    for (const area of selectedAreas) {
+      const id = Number(area.id ?? area.Id);
+      if (!Number.isFinite(id)) continue;
+      map[id] = area;
+    }
+    return map;
+  }, [selectedAreas]);
+
   const areaNameByIdRef = useRef(areaNameById);
+  const selectedAreaByIdRef = useRef(selectedAreaById);
 
   useEffect(() => {
     areaNameByIdRef.current = areaNameById;
   }, [areaNameById]);
+
+  useEffect(() => {
+    selectedAreaByIdRef.current = selectedAreaById;
+  }, [selectedAreaById]);
+
+  useEffect(() => {
+    onAreaSelectRef.current = onAreaSelect;
+  }, [onAreaSelect]);
 
   // ===== INIT MAP =====
   useEffect(() => {
@@ -142,6 +163,8 @@ export default function MapView({
 
     // Klik na ikonicu
     map.on("singleclick", (evt) => {
+      let clickedArea = null;
+
       map.forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
         if (layer === eventLayerRef.current) {
           const coords = feature.getGeometry().getCoordinates();
@@ -160,7 +183,19 @@ export default function MapView({
           setIsModalOpen(true);
           return true;
         }
+
+        if (layer === vectorLayerRef.current) {
+          const areaId = Number(feature.get("areaId"));
+          if (!Number.isFinite(areaId)) return false;
+          clickedArea = selectedAreaByIdRef.current?.[areaId] ?? null;
+        }
+
+        return false;
       });
+
+      if (clickedArea) {
+        onAreaSelectRef.current?.(clickedArea);
+      }
     });
 
     map.on("pointermove", function (e) {
