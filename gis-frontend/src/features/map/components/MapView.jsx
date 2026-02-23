@@ -26,6 +26,8 @@ import { loadThresholdByAreaAndEvent } from "./thresholdUtils";
 import { loadAreaMeasurements } from "./areaMeasurementsApi";
 import { loadEventTypeMetaById } from "./eventTypeIconUtils";
 import { buildSelectedEventDetails } from "./eventSelectionUtils";
+import { normalizeMeasuredAtUtc } from "./normalizeEventForPanel";
+import { showAreaSnapshotMeasurements } from "./showAreaSnapshotMeasurements";
 
 function isExpectedNegotiationStop(error) {
   const message = String(error?.message ?? error ?? "").toLowerCase();
@@ -155,123 +157,6 @@ export default function MapView({
     onAreaMeasurementsChangeRef.current = onAreaMeasurementsChange;
   }, [onAreaMeasurementsChange]);
 
-  const parseMeasuredAtMs = (measuredAtUtc) => {
-    if (!measuredAtUtc) return null;
-    const ms = Date.parse(measuredAtUtc);
-    return Number.isFinite(ms) ? ms : null;
-  };
-
-  const normalizeMeasuredAtUtc = (rawValue) => {
-    if (rawValue == null) return null;
-
-    const toIsoFromNumber = (numeric) => {
-      if (!Number.isFinite(numeric)) return null;
-      const ms = numeric > 1e12 ? numeric : numeric * 1000;
-      const date = new Date(ms);
-      return Number.isNaN(date.getTime()) ? null : date.toISOString();
-    };
-
-    if (typeof rawValue === "number") {
-      return toIsoFromNumber(rawValue);
-    }
-
-    if (typeof rawValue === "string") {
-      const trimmed = rawValue.trim();
-      if (!trimmed) return null;
-
-      if (/^\d+$/.test(trimmed)) {
-        return toIsoFromNumber(Number(trimmed));
-      }
-
-      const parsed = Date.parse(trimmed);
-      if (Number.isFinite(parsed)) {
-        return new Date(parsed).toISOString();
-      }
-    }
-
-    return null;
-  };
-
-  const normalizeEventForPanel = (eventItem, fallbackAreaId) => {
-    const areaId = Number(eventItem?.areaId ?? eventItem?.AreaId ?? fallbackAreaId);
-    const eventTypeId = Number(eventItem?.eventTypeId ?? eventItem?.EventTypeId);
-    const value =
-      eventItem?.value ??
-      eventItem?.Value ??
-      eventItem?.measuredValue ??
-      eventItem?.MeasuredValue ??
-      null;
-    const measuredAtRaw =
-      eventItem?.measuredAtUtc ??
-      eventItem?.MeasuredAtUtc ??
-      eventItem?.measuredAt ??
-      eventItem?.MeasuredAt ??
-      eventItem?.measurementTimeUtc ??
-      eventItem?.MeasurementTimeUtc ??
-      eventItem?.measurementTime ??
-      eventItem?.MeasurementTime ??
-      eventItem?.timeOfMeasurement ??
-      eventItem?.TimeOfMeasurement ??
-      eventItem?.timestamp ??
-      eventItem?.Timestamp ??
-      eventItem?.createdAt ??
-      eventItem?.CreatedAt ??
-      null;
-    const measuredAtUtc = normalizeMeasuredAtUtc(measuredAtRaw);
-    const unit = eventItem?.eventTypeUnit ?? eventItem?.EventTypeUnit ?? "";
-    const backendEventTypeName = eventItem?.eventTypeName ?? eventItem?.EventTypeName;
-
-    return {
-      areaId,
-      eventTypeId,
-      value,
-      measuredAtUtc,
-      unit,
-      backendEventTypeName,
-    };
-  };
-
-  const buildPanelMeasurements = ({ areaId, liveEvents = [], databaseEvents = [], cutoffMs }) => {
-    if (!Number.isFinite(areaId)) return [];
-
-    const merged = [...databaseEvents, ...liveEvents].map((eventItem) =>
-      normalizeEventForPanel(eventItem, areaId)
-    );
-
-    const unique = [];
-    const seen = new Set();
-
-    for (const item of merged) {
-      const measuredMs = parseMeasuredAtMs(item.measuredAtUtc);
-      if (Number.isFinite(cutoffMs) && measuredMs != null && measuredMs > cutoffMs) {
-        continue;
-      }
-
-      const key = `${item.areaId}|${item.eventTypeId}|${item.value}|${item.measuredAtUtc ?? "-"}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      unique.push(item);
-    }
-
-    return unique
-      .map((item, index) => {
-        const typeNameFromMeta = eventTypeNameByIdRef.current?.[item.eventTypeId];
-        const unitFromMeta = eventTypeUnitByIdRef.current?.[item.eventTypeId] ?? "";
-        return {
-          id: `${areaId}-${item.eventTypeId}-${item.measuredAtUtc ?? "no-time"}-${index}`,
-          eventTypeName: item.backendEventTypeName ?? typeNameFromMeta ?? "-",
-          value: item.value,
-          unit: item.unit || unitFromMeta,
-          measuredAtUtc: item.measuredAtUtc,
-        };
-      })
-      .sort((a, b) => {
-        const timeA = a.measuredAtUtc ? Date.parse(a.measuredAtUtc) : 0;
-        const timeB = b.measuredAtUtc ? Date.parse(b.measuredAtUtc) : 0;
-        return timeB - timeA;
-      });
-  };
-
   const getDatabaseEventsForArea = async (areaId) => {
     if (Object.prototype.hasOwnProperty.call(databaseEventsByAreaIdRef.current, areaId)) {
       return databaseEventsByAreaIdRef.current[areaId];
@@ -281,37 +166,6 @@ export default function MapView({
     const normalizedRows = Array.isArray(rows) ? rows : [];
     databaseEventsByAreaIdRef.current[areaId] = normalizedRows;
     return normalizedRows;
-  };
-
-  const showAreaSnapshotMeasurements = async (area) => {
-    const areaId = Number(area?.id ?? area?.Id);
-    if (!Number.isFinite(areaId)) return;
-
-    const snapshotCutoffMs = Date.now();
-    const snapshotLiveEvents = allEventsRef.current
-      .filter((eventItem) => Number(eventItem.areaId) === areaId)
-      .map((eventItem) => ({ ...eventItem }));
-
-    const snapshotToken = ++panelSnapshotTokenRef.current;
-
-    const liveOnlyMeasurements = buildPanelMeasurements({
-      areaId,
-      liveEvents: snapshotLiveEvents,
-      databaseEvents: [],
-      cutoffMs: snapshotCutoffMs,
-    });
-    onAreaMeasurementsChangeRef.current?.(liveOnlyMeasurements);
-
-    const databaseEvents = await getDatabaseEventsForArea(areaId);
-    if (snapshotToken !== panelSnapshotTokenRef.current) return;
-
-    const fullSnapshotMeasurements = buildPanelMeasurements({
-      areaId,
-      liveEvents: snapshotLiveEvents,
-      databaseEvents,
-      cutoffMs: snapshotCutoffMs,
-    });
-    onAreaMeasurementsChangeRef.current?.(fullSnapshotMeasurements);
   };
 
   // ===== INIT MAP =====
@@ -360,7 +214,15 @@ export default function MapView({
 
       if (clickedArea) {
         onAreaSelectRef.current?.(clickedArea);
-        showAreaSnapshotMeasurements(clickedArea);
+        showAreaSnapshotMeasurements({
+          area: clickedArea,
+          allEventsRef,
+          panelSnapshotTokenRef,
+          getDatabaseEventsForArea,
+          eventTypeNameByIdRef,
+          eventTypeUnitByIdRef,
+          onAreaMeasurementsChangeRef,
+        });
       }
     });
 
