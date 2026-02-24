@@ -43,6 +43,14 @@ export default function UserDashboardAreaDetailsPanel({ area, measurements = [] 
   }, [measurements]);
 
   useEffect(() => {
+    if (eventTypeOptions.length === 1) {
+      const singleEventType = eventTypeOptions[0];
+      if (eventTypeFilter !== singleEventType) {
+        setEventTypeFilter(singleEventType);
+      }
+      return;
+    }
+
     if (eventTypeFilter === "all") return;
     if (!eventTypeOptions.includes(eventTypeFilter)) {
       setEventTypeFilter("all");
@@ -76,10 +84,11 @@ export default function UserDashboardAreaDetailsPanel({ area, measurements = [] 
     });
   }, [measurements, eventTypeFilter, criticalOnly, dateFrom, dateTo]);
 
-  const hasActiveFilters = eventTypeFilter !== "all" || criticalOnly || dateFrom || dateTo;
+  const isEventTypeFilterActive = eventTypeOptions.length > 1 && eventTypeFilter !== "all";
+  const hasActiveFilters = isEventTypeFilterActive || criticalOnly || dateFrom || dateTo;
 
   const clearFilters = () => {
-    setEventTypeFilter("all");
+    setEventTypeFilter(eventTypeOptions.length > 1 ? "all" : (eventTypeOptions[0] ?? "all"));
     setDateFrom("");
     setDateTo("");
     setCriticalOnly(false);
@@ -114,7 +123,7 @@ export default function UserDashboardAreaDetailsPanel({ area, measurements = [] 
                       value={eventTypeFilter}
                       onChange={(event) => setEventTypeFilter(event.target.value)}
                     >
-                      <option value="all">Svi tipovi</option>
+                      {eventTypeOptions.length > 1 && <option value="all">Svi tipovi</option>}
                       {eventTypeOptions.map((eventType) => (
                         <option key={eventType} value={eventType}>
                           {eventType}
