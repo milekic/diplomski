@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import exportFilteredMeasurementsToPdf from "./exportFilteredMeasurementsToPdf";
+import formatMeasurementValue from "./formatMeasurementValue";
 import formatMeasuredTime from "./formatMeasuredTime";
-
-function formatValue(value, unit) {
-  if (value == null) return "-";
-  return unit ? `${value} ${unit}` : String(value);
-}
 
 function parseFilterDateStart(dateValue) {
   if (!dateValue) return null;
@@ -86,12 +83,26 @@ export default function UserDashboardAreaDetailsPanel({ area, measurements = [] 
 
   const isEventTypeFilterActive = eventTypeOptions.length > 1 && eventTypeFilter !== "all";
   const hasActiveFilters = isEventTypeFilterActive || criticalOnly || dateFrom || dateTo;
+  const canExportFilteredMeasurements = !isInvalidDateRange && filteredMeasurements.length > 0;
 
   const clearFilters = () => {
     setEventTypeFilter(eventTypeOptions.length > 1 ? "all" : (eventTypeOptions[0] ?? "all"));
     setDateFrom("");
     setDateTo("");
     setCriticalOnly(false);
+  };
+
+  const handleExportFilteredToPdf = () => {
+    if (!canExportFilteredMeasurements) return;
+
+    const isOpened = exportFilteredMeasurementsToPdf({
+      areaName,
+      measurements: filteredMeasurements,
+    });
+
+    if (!isOpened) {
+      window.alert("Pregled za štampu je blokiran. Omogućite popup prozore za ovu stranicu.");
+    }
   };
 
   return (
@@ -178,6 +189,17 @@ export default function UserDashboardAreaDetailsPanel({ area, measurements = [] 
                       </button>
                     </div>
                   )}
+
+                  <div className="col-12">
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-primary w-100"
+                      onClick={handleExportFilteredToPdf}
+                      disabled={!canExportFilteredMeasurements}
+                    >
+                      Izvezi u PDF
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -205,7 +227,7 @@ export default function UserDashboardAreaDetailsPanel({ area, measurements = [] 
                         <tr key={measurement.id}>
                           <td className="small">{measurement.eventTypeName ?? "-"}</td>
                           <td className="small text-nowrap">
-                            {formatValue(measurement.value, measurement.unit)}
+                            {formatMeasurementValue(measurement.value, measurement.unit)}
                           </td>
                           <td className="small text-nowrap">{formatMeasuredTime(measurement.measuredAtUtc)}</td>
                         </tr>
