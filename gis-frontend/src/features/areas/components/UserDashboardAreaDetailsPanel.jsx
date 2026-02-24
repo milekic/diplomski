@@ -174,7 +174,7 @@ export default function UserDashboardAreaDetailsPanel({ area, measurements = [] 
                         className="btn btn-sm btn-outline-secondary w-100"
                         onClick={clearFilters}
                       >
-                        Ocisti filtere
+                        Očisti filtere
                       </button>
                     </div>
                   )}
