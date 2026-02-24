@@ -52,7 +52,6 @@ export default function MapView({
   const eventSourceRef = useRef(new VectorSource());
   const styleCacheRef = useRef({});
 
-  // All events are stored here
   const [allEvents, setAllEvents] = useState([]);
   const allEventsRef = useRef(allEvents);
   const databaseEventsByAreaIdRef = useRef({});
@@ -295,6 +294,7 @@ export default function MapView({
       .filter((e) => selectedAreaIdSet.has(e.areaId))
       .filter((e) => (eventVisibilityMode === "criticalOnly" ? isCritical(e) : true))
       .forEach((e) => {
+        const threshold = thresholdByAreaAndEvent[`${e.areaId}-${e.eventTypeId}`];
         const point = new Point(fromLonLat([Number(e.x), Number(e.y)]));
 
         const feature = new Feature({ geometry: point });
@@ -302,6 +302,7 @@ export default function MapView({
         feature.set("areaId", e.areaId);
         feature.set("eventTypeId", e.eventTypeId);
         feature.set("value", e.value);
+        feature.set("threshold", threshold);
         feature.set("measuredAtUtc", e.measuredAtUtc);
 
         source.addFeature(feature);

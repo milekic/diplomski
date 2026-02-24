@@ -1,40 +1,23 @@
 import React from "react";
+import formatEventLocation from "./formatEventLocation";
+import formatMeasuredTime from "./formatMeasuredTime";
+import { getThresholdExceedanceText } from "./thresholdExceedanceUtils";
 
 export default function EventDetailsModal({ show, event, onClose }) {
   if (!show) return null;
-
-  const formatCoordinate = (value) => {
-    const numericValue = Number(value);
-    if (Number.isNaN(numericValue)) return null;
-    return numericValue.toFixed(3);
-  };
-
-  const measuredText = event?.measuredAtUtc
-    ? (() => {
-        const parts = new Intl.DateTimeFormat("bs-BA", {
-          timeZone: "Europe/Sarajevo",
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          hour12: false,
-        }).formatToParts(new Date(event.measuredAtUtc));
-
-        const get = (type) => parts.find((p) => p.type === type)?.value ?? "00";
-        return `${get("day")}.${get("month")}.${get("year")} ${get("hour")}:${get("minute")}:${get("second")}`;
-      })()
-    : "-";
+  const measuredText = formatMeasuredTime(event?.measuredAtUtc);
 
   const valueText =
     event?.value != null
       ? `${event.value}${event?.eventTypeUnit ? ` ${event.eventTypeUnit}` : ""}`
       : "-";
 
-  const formattedX = event?.x != null ? formatCoordinate(event.x) : null;
-  const formattedY = event?.y != null ? formatCoordinate(event.y) : null;
-  const locationText = formattedX != null && formattedY != null ? `${formattedX}, ${formattedY}` : "-";
+  const locationText = formatEventLocation(event?.x, event?.y, 3);
+  const thresholdExceedanceText = getThresholdExceedanceText(
+    event?.value,
+    event?.threshold,
+    event?.eventTypeUnit
+  );
 
   return (
     <>
@@ -70,8 +53,17 @@ export default function EventDetailsModal({ show, event, onClose }) {
                   </span>
                 </div>
 
+                {thresholdExceedanceText && (
+                  <div className="d-flex justify-content-between align-items-center px-3 py-2 bg-light rounded-3 border">
+                    <span className="text-muted small">Prekoračenje preko kritičnog praga</span>
+                    <span className="badge bg-warning-subtle text-warning-emphasis border px-3 py-2">
+                      {thresholdExceedanceText}
+                    </span>
+                  </div>
+                )}
+
                 <div className="d-flex justify-content-between align-items-center px-3 py-2 bg-light rounded-3 border">
-                  <span className="text-muted small">Vrijeme pocetka mjerenja</span>
+                  <span className="text-muted small">Vrijeme početka mjerenja</span>
                   <span className="fw-semibold">{measuredText}</span>
                 </div>
 
