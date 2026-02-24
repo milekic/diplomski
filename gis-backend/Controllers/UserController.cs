@@ -36,6 +36,7 @@ namespace gis_backend.Controllers
 
         [HttpGet("role/user")]
         //gat all users where Role=user
+        //https://localhost:7007/api/Users/role/user
         public async Task<IActionResult> GetAllUsers()
         {
             try
@@ -47,8 +48,8 @@ namespace gis_backend.Controllers
             {
                 return StatusCode(500, new
                 {
-                    message = "Doslo je do greske na serveru.",
-                    details = ex.Message
+                    message = "Doslo je do greske na serveru."
+                    //details = ex.Message
                 });
             }
         }
