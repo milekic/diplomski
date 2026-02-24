@@ -3,6 +3,12 @@ import React from "react";
 export default function EventDetailsModal({ show, event, onClose }) {
   if (!show) return null;
 
+  const formatCoordinate = (value) => {
+    const numericValue = Number(value);
+    if (Number.isNaN(numericValue)) return null;
+    return numericValue.toFixed(3);
+  };
+
   const measuredText = event?.measuredAtUtc
     ? (() => {
         const parts = new Intl.DateTimeFormat("bs-BA", {
@@ -25,6 +31,10 @@ export default function EventDetailsModal({ show, event, onClose }) {
     event?.value != null
       ? `${event.value}${event?.eventTypeUnit ? ` ${event.eventTypeUnit}` : ""}`
       : "-";
+
+  const formattedX = event?.x != null ? formatCoordinate(event.x) : null;
+  const formattedY = event?.y != null ? formatCoordinate(event.y) : null;
+  const locationText = formattedX != null && formattedY != null ? `${formattedX}, ${formattedY}` : "-";
 
   return (
     <>
@@ -67,9 +77,7 @@ export default function EventDetailsModal({ show, event, onClose }) {
 
                 <div className="d-flex justify-content-between align-items-center px-3 py-2 bg-light rounded-3 border">
                   <span className="text-muted small">Lokacija</span>
-                  <span className="fw-semibold">
-                    {event?.x != null && event?.y != null ? `${event.x}, ${event.y}` : "-"}
-                  </span>
+                  <span className="fw-semibold">{locationText}</span>
                 </div>
               </div>
             </div>
