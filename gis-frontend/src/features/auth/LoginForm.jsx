@@ -153,7 +153,7 @@ export default function LoginForm() {
                     Prijavljivanje...
                   </>
                 ) : (
-                  "Login"
+                  "Prijavi se"
                 )}
               </Button>
             </Form>

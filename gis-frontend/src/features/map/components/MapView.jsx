@@ -1,12 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import Map from "ol/Map";
-import View from "ol/View";
-import TileLayer from "ol/layer/Tile";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
-import OSM from "ol/source/OSM";
 import GeoJSON from "ol/format/GeoJSON";
-import { fromLonLat, toLonLat } from "ol/proj";
+import { fromLonLat } from "ol/proj";
 import { Style, Icon } from "ol/style";
 import Point from "ol/geom/Point";
 import Feature from "ol/Feature";
@@ -23,15 +19,28 @@ import EventDetailsModal from "./EventDetailsModal";
 import { DEFAULT_ICON_URL } from "./eventIcons";
 import { toFeatureCollection } from "./geoJsonUtils";
 import { loadThresholdByAreaAndEvent } from "./thresholdUtils";
+import { loadAreaMeasurements } from "./areaMeasurementsApi";
 import { loadEventTypeMetaById } from "./eventTypeIconUtils";
 import { buildSelectedEventDetails } from "./eventSelectionUtils";
+import { normalizeMeasuredAtUtc } from "./normalizeEventForPanel";
+import { showAreaSnapshotMeasurements } from "./showAreaSnapshotMeasurements";
+import useMapInit from "./useMapInit";
+
+function isExpectedNegotiationStop(error) {
+  const message = String(error?.message ?? error ?? "").toLowerCase();
+  return message.includes("stopped during negotiation");
+}
 
 export default function MapView({
   selectedAreas = [],
   eventVisibilityMode = "all",
+  onAreaSelect,
+  onAreaMeasurementsChange,
 }) {
   const mapDivRef = useRef(null);
   const mapRef = useRef(null);
+  const onAreaSelectRef = useRef(onAreaSelect);
+  const onAreaMeasurementsChangeRef = useRef(onAreaMeasurementsChange);
 
   const vectorSourceRef = useRef(new VectorSource());
   const vectorLayerRef = useRef(
@@ -43,11 +52,12 @@ export default function MapView({
   const eventSourceRef = useRef(new VectorSource());
   const styleCacheRef = useRef({});
 
-  //  Svi događaji se čuvaju ovdje
+  // All events are stored here
   const [allEvents, setAllEvents] = useState([]);
-  const [thresholdByAreaAndEvent, setThresholdByAreaAndEvent] = useState(
-    {}
-  );
+  const allEventsRef = useRef(allEvents);
+  const databaseEventsByAreaIdRef = useRef({});
+  const panelSnapshotTokenRef = useRef(0);
+  const [thresholdByAreaAndEvent, setThresholdByAreaAndEvent] = useState({});
 
   const [eventTypeIconById, setEventTypeIconById] = useState({});
   const [eventTypeNameById, setEventTypeNameById] = useState({});
@@ -64,6 +74,10 @@ export default function MapView({
   }, [eventTypeIconById]);
 
   useEffect(() => {
+    allEventsRef.current = allEvents;
+  }, [allEvents]);
+
+  useEffect(() => {
     eventTypeNameByIdRef.current = eventTypeNameById;
   }, [eventTypeNameById]);
 
@@ -76,9 +90,7 @@ export default function MapView({
       source: eventSourceRef.current,
       style: (feature) => {
         const eventTypeId = Number(feature.get("eventTypeId"));
-        const iconUrl =
-          eventTypeIconByIdRef.current?.[eventTypeId] ||
-          DEFAULT_ICON_URL;
+        const iconUrl = eventTypeIconByIdRef.current?.[eventTypeId] || DEFAULT_ICON_URL;
 
         if (!styleCacheRef.current[iconUrl]) {
           styleCacheRef.current[iconUrl] = new Style({
@@ -96,11 +108,7 @@ export default function MapView({
   );
 
   const selectedAreaIdSet = useMemo(() => {
-    return new Set(
-      selectedAreas
-        .map((a) => Number(a.id ?? a.Id))
-        .filter(Number.isFinite)
-    );
+    return new Set(selectedAreas.map((a) => Number(a.id ?? a.Id)).filter(Number.isFinite));
   }, [selectedAreas]);
 
   const selectedAreaIds = useMemo(() => {
@@ -117,62 +125,96 @@ export default function MapView({
     return map;
   }, [selectedAreas]);
 
+  const selectedAreaById = useMemo(() => {
+    const map = {};
+    for (const area of selectedAreas) {
+      const id = Number(area.id ?? area.Id);
+      if (!Number.isFinite(id)) continue;
+      map[id] = area;
+    }
+    return map;
+  }, [selectedAreas]);
+
   const areaNameByIdRef = useRef(areaNameById);
+  const selectedAreaByIdRef = useRef(selectedAreaById);
 
   useEffect(() => {
     areaNameByIdRef.current = areaNameById;
   }, [areaNameById]);
 
-  // ===== INIT MAP =====
   useEffect(() => {
-    if (mapRef.current) return;
+    selectedAreaByIdRef.current = selectedAreaById;
+  }, [selectedAreaById]);
 
-    const map = new Map({
-      target: mapDivRef.current,
-      layers: [
-        new TileLayer({ source: new OSM() }),
-        vectorLayerRef.current,
-        eventLayerRef.current,
-      ],
-      view: new View({
-        center: fromLonLat(DEFAULT_CENTER_LONLAT),
-        zoom: DEFAULT_ZOOM,
-      }),
-    });
+  useEffect(() => {
+    onAreaSelectRef.current = onAreaSelect;
+  }, [onAreaSelect]);
 
-    // Klik na ikonicu
-    map.on("singleclick", (evt) => {
-      map.forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
-        if (layer === eventLayerRef.current) {
-          const coords = feature.getGeometry().getCoordinates();
-          const lonLat = toLonLat(coords);
+  useEffect(() => {
+    onAreaMeasurementsChangeRef.current = onAreaMeasurementsChange;
+  }, [onAreaMeasurementsChange]);
 
-          setSelectedEvent(
-            buildSelectedEventDetails(
-              feature,
-              lonLat,
-              areaNameByIdRef.current,
-              eventTypeNameByIdRef.current,
-              eventTypeUnitByIdRef.current
-            )
-          );
+  const getDatabaseEventsForArea = async (areaId) => {
+    if (Object.prototype.hasOwnProperty.call(databaseEventsByAreaIdRef.current, areaId)) {
+      return databaseEventsByAreaIdRef.current[areaId];
+    }
 
-          setIsModalOpen(true);
-          return true;
-        }
+    const rows = await loadAreaMeasurements(areaId);
+    const normalizedRows = Array.isArray(rows) ? rows : [];
+    databaseEventsByAreaIdRef.current[areaId] = normalizedRows;
+    return normalizedRows;
+  };
+
+  //map init
+  useMapInit({
+    mapRef,
+    mapDivRef,
+    vectorLayer: vectorLayerRef.current,
+    eventLayer: eventLayerRef.current,
+    centerLonLat: DEFAULT_CENTER_LONLAT,
+    zoom: DEFAULT_ZOOM,
+    selectedAreaByIdRef,
+    onEventFeatureClick: (feature, lonLat) => {
+      setSelectedEvent(
+        buildSelectedEventDetails(
+          feature,
+          lonLat,
+          areaNameByIdRef.current,
+          eventTypeNameByIdRef.current,
+          eventTypeUnitByIdRef.current
+        )
+      );
+      setIsModalOpen(true);
+    },
+    onAreaFeatureClick: (clickedArea) => {
+      onAreaSelectRef.current?.(clickedArea);
+      showAreaSnapshotMeasurements({
+        area: clickedArea,
+        allEventsRef,
+        panelSnapshotTokenRef,
+        getDatabaseEventsForArea,
+        eventTypeNameByIdRef,
+        eventTypeUnitByIdRef,
+        onAreaMeasurementsChangeRef,
       });
-    });
+    },
+  });
 
-    map.on("pointermove", function (e) {
-      const hit = map.hasFeatureAtPixel(e.pixel);
-      map.getTargetElement().style.cursor = hit ? "pointer" : "";
-    });
+  useEffect(() => {
+    const target = mapDivRef.current;
+    if (!target) return;
 
-    mapRef.current = map;
+    const syncMapSize = () => {
+      mapRef.current?.updateSize();
+    };
+
+    const observer = new ResizeObserver(syncMapSize);
+    observer.observe(target);
+    window.addEventListener("resize", syncMapSize);
 
     return () => {
-      map.setTarget(null);
-      mapRef.current = null;
+      observer.disconnect();
+      window.removeEventListener("resize", syncMapSize);
     };
   }, []);
 
@@ -234,7 +276,7 @@ export default function MapView({
     };
   }, [selectedAreaIds]);
 
-  // FILTRIRANJE EVENTA PREMA ČEKIRANIM OBLASTIMA
+  // Filter events by checked areas and critical mode
   useEffect(() => {
     const source = eventSourceRef.current;
     source.clear();
@@ -253,9 +295,7 @@ export default function MapView({
       .filter((e) => selectedAreaIdSet.has(e.areaId))
       .filter((e) => (eventVisibilityMode === "criticalOnly" ? isCritical(e) : true))
       .forEach((e) => {
-        const point = new Point(
-          fromLonLat([Number(e.x), Number(e.y)])
-        );
+        const point = new Point(fromLonLat([Number(e.x), Number(e.y)]));
 
         const feature = new Feature({ geometry: point });
 
@@ -271,54 +311,61 @@ export default function MapView({
   // ===== SIGNALR =====
   useEffect(() => {
     const connection = createMonitoringConnection();
+    let disposed = false;
 
-    connection.on("MeasurementUpdated", (payload) => {
+    const onMeasurementUpdated = (payload) => {
       const areaId = Number(payload.areaId ?? payload.AreaId);
 
       const x = payload.x ?? payload.X;
       const y = payload.y ?? payload.Y;
       if (x == null || y == null) return;
 
-      const eventTypeId = Number(
-        payload.eventTypeId ?? payload.EventTypeId
-      );
+      const eventTypeId = Number(payload.eventTypeId ?? payload.EventTypeId);
 
-      // Dodaj u React state (ne direktno na mapu)
       setAllEvents((prev) => [
         ...prev,
         {
           areaId,
           eventTypeId,
           value: payload.value ?? payload.Value,
-          measuredAtUtc:
-            payload.measuredAtUtc ?? payload.MeasuredAtUtc,
+          measuredAtUtc: normalizeMeasuredAtUtc(
+            payload.measuredAtUtc ??
+              payload.MeasuredAtUtc ??
+              payload.measuredAt ??
+              payload.MeasuredAt ??
+              payload.measurementTimeUtc ??
+              payload.MeasurementTimeUtc ??
+              payload.timestamp ??
+              payload.Timestamp
+          ),
           x: Number(x),
           y: Number(y),
         },
       ]);
+    };
+
+    connection.on("MeasurementUpdated", onMeasurementUpdated);
+
+    const startPromise = connection.start().catch((error) => {
+      if (disposed && isExpectedNegotiationStop(error)) return;
+      console.error("SignalR error", error);
     });
 
-    connection.start().catch(() =>
-      console.error("SignalR error")
-    );
-
     return () => {
-      connection.stop();
+      disposed = true;
+      connection.off("MeasurementUpdated", onMeasurementUpdated);
+
+      Promise.resolve(startPromise).finally(() => {
+        connection.stop().catch(() => {});
+      });
     };
   }, []);
 
   return (
     <>
-      <div
-        ref={mapDivRef}
-        style={{ width: "100%", height: "100%" }}
-      />
+      <div ref={mapDivRef} style={{ width: "100%", height: "100%" }} />
 
-      <EventDetailsModal
-        show={isModalOpen}
-        event={selectedEvent}
-        onClose={() => setIsModalOpen(false)}
-      />
+      <EventDetailsModal show={isModalOpen} event={selectedEvent} onClose={() => setIsModalOpen(false)} />
     </>
   );
 }

@@ -1,51 +1,125 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import LayersTree from "../features/map/components/LayersTree";
 import MapView from "../features/map/components/MapView";
-import { getVisibleAreas } from "../features/map/components/visibleAreasApi"; // ako ti je druga putanja, prilagodi
+import UserDashboardAreaDetailsPanel from "../features/areas/components/UserDashboardAreaDetailsPanel";
+import { getVisibleAreas } from "../features/map/components/visibleAreasApi";
+
+const LEFT_PANEL_WIDTH = 260;
+const RIGHT_PANEL_DEFAULT_WIDTH = 340;
+const RIGHT_PANEL_MIN_WIDTH = 300;
+const MIN_MAP_WIDTH = 420;
 
 export default function UserDashboardPage() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [eventVisibilityMode, setEventVisibilityMode] = useState("all");
+  const [rightPanelWidth, setRightPanelWidth] = useState(RIGHT_PANEL_DEFAULT_WIDTH);
+  const isResizingRef = useRef(false);
 
-  // sve oblasti (moje + globalne)
+  // All visible areas (owned + global)
   const [areas, setAreas] = useState([]);
 
-  // čekirani ID-evi iz tree-a
+  // Checked area ids from LayersTree
   const [selectedAreaIds, setSelectedAreaIds] = useState([]);
+  const [selectedArea, setSelectedArea] = useState(null);
+  const [areaMeasurements, setAreaMeasurements] = useState([]);
 
-  // učitaj oblasti jednom
+  // Load areas once
   useEffect(() => {
     (async () => {
       try {
         const data = await getVisibleAreas();
         setAreas(Array.isArray(data) ? data : []);
       } catch (e) {
-        console.error("Ne mogu učitati oblasti");
+        console.error("Unable to load visible areas");
         setAreas([]);
       }
     })();
   }, []);
 
-  // izračunaj selektovane oblasti 
+  // Build selected areas for map rendering
   const selectedAreas = useMemo(() => {
-    const setIds = new Set(selectedAreaIds);
-    return areas.filter((a) => setIds.has(a.id ?? a.Id));
+    const ids = new Set(selectedAreaIds.map((id) => Number(id)));
+    return areas.filter((area) => ids.has(Number(area.id ?? area.Id)));
   }, [areas, selectedAreaIds]);
 
+  // Keep selected area valid after LayersTree changes
+  useEffect(() => {
+    if (!selectedArea) return;
+
+    const selectedId = Number(selectedArea.id ?? selectedArea.Id);
+    const stillVisible = selectedAreas.some(
+      (area) => Number(area.id ?? area.Id) === selectedId
+    );
+
+    if (!stillVisible) {
+      setSelectedArea(null);
+      setAreaMeasurements([]);
+    }
+  }, [selectedArea, selectedAreas]);
+
+  useEffect(() => {
+    const clampWidth = (width) => {
+      const viewportWidth = window.innerWidth;
+      const maxWidth = Math.max(
+        RIGHT_PANEL_MIN_WIDTH,
+        viewportWidth - LEFT_PANEL_WIDTH - MIN_MAP_WIDTH
+      );
+      return Math.min(Math.max(width, RIGHT_PANEL_MIN_WIDTH), maxWidth);
+    };
+
+    const onMouseMove = (event) => {
+      if (!isResizingRef.current || isExpanded) return;
+      const widthFromRight = window.innerWidth - event.clientX;
+      setRightPanelWidth(clampWidth(widthFromRight));
+    };
+
+    const stopResize = () => {
+      if (!isResizingRef.current) return;
+      isResizingRef.current = false;
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+    };
+
+    const onWindowResize = () => {
+      setRightPanelWidth((current) => clampWidth(current));
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", stopResize);
+    window.addEventListener("resize", onWindowResize);
+
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", stopResize);
+      window.removeEventListener("resize", onWindowResize);
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+    };
+  }, [isExpanded]);
+
+  const startResize = (event) => {
+    if (isExpanded) return;
+    event.preventDefault();
+    isResizingRef.current = true;
+    document.body.style.userSelect = "none";
+    document.body.style.cursor = "col-resize";
+  };
+
   return (
-    <div className="container-fluid vh-100 d-flex flex-column">        
-      {/* ===== MAIN CONTENT ===== */}
-      <div className="row flex-grow-1 overflow-hidden">
-        {/* ===== LEFT SIDEBAR ===== */}
-        <div className="col-2 border-end p-3 overflow-auto">
-          {/* umjesto console.log, setuj state */}
+    <div className="container-fluid vh-100 d-flex flex-column">
+      <div className="flex-grow-1 d-flex overflow-hidden">
+        {/* Left Sidebar */}
+        <div
+          className="border-end p-3 overflow-auto flex-shrink-0"
+          style={{ width: `${LEFT_PANEL_WIDTH}px` }}
+        >
           <LayersTree onLayersChange={setSelectedAreaIds} />
         </div>
 
-        {/* ===== MAP AREA ===== */}
-        <div className={`${isExpanded ? "col-10" : "col-8"} p-3 d-flex flex-column`}>
+        {/* Map Section */}
+        <div className="p-3 d-flex flex-column flex-grow-1 overflow-hidden">
           <div className="d-flex align-items-center gap-3 mb-2">
-            <span className="fw-semibold small mb-0">Prikaz događaja:</span>
+            <span className="fw-semibold small mb-0">Prikaz dogadjaja:</span>
 
             <div className="form-check form-check-inline mb-0">
               <input
@@ -57,7 +131,7 @@ export default function UserDashboardPage() {
                 onChange={() => setEventVisibilityMode("all")}
               />
               <label className="form-check-label small" htmlFor="event-mode-all">
-                Svi događaji
+                Svi dogadjaji
               </label>
             </div>
 
@@ -77,53 +151,48 @@ export default function UserDashboardPage() {
           </div>
 
           <div
-            className="border rounded position-relative bg-light"
-            style={{ height: "90%" }}
+            className="border rounded position-relative bg-light flex-grow-1"
+            style={{ minHeight: 0 ,maxHeight: "90%"}}
           >
-            {/* Toggle dugme */}
             <button
               className="btn btn-sm btn-outline-secondary position-absolute"
               style={{ top: "10px", right: "10px", zIndex: 1000 }}
               onClick={() => setIsExpanded(!isExpanded)}
             >
-              {isExpanded ? "⮜" : "⮞"}
+              {isExpanded ? "<<" : ">>"}
             </button>
 
-            {/* proslijedi selektovane oblasti */}
+            {/* Map View */}
             <MapView
               selectedAreas={selectedAreas}
               eventVisibilityMode={eventVisibilityMode}
+              onAreaSelect={setSelectedArea}
+              onAreaMeasurementsChange={setAreaMeasurements}
             />
           </div>
         </div>
 
-        {/* ===== RIGHT PANEL ===== */}
+        {/* Right Panel */}
         {!isExpanded && (
-          <div className="col-2 border-start p-3 overflow-auto">
-            <h6>Detalji oblasti</h6>
-
-            <div className="mb-3">
-              <strong>Oblast:</strong> Nije selektovana
+          <>
+            <div
+              className="border-start border-end bg-body-tertiary flex-shrink-0"
+              role="separator"
+              aria-orientation="vertical"
+              aria-label="Promijeni širinu panela"
+              onMouseDown={startResize}
+              style={{ width: "8px", cursor: "col-resize" }}
+            />
+            <div
+              className="border-start p-3 overflow-auto flex-shrink-0"
+              style={{ width: `${rightPanelWidth}px`, maxHeight: "95%" }}
+            >
+              <UserDashboardAreaDetailsPanel
+                area={selectedArea}
+                measurements={areaMeasurements}
+              />
             </div>
-
-            <div className="mb-2 p-2 border rounded">
-              <p className="mb-1"><strong>Poplave</strong></p>
-              <small>Prag: -</small><br />
-              <small>Trenutna vrijednost: -</small>
-            </div>
-
-            <div className="mb-2 p-2 border rounded">
-              <p className="mb-1"><strong>Temperatura</strong></p>
-              <small>Prag: -</small><br />
-              <small>Trenutna vrijednost: -</small>
-            </div>
-
-            <div className="d-grid gap-2 mt-3">
-              <button className="btn btn-outline-dark btn-sm">
-                PDF izvještaj
-              </button>
-            </div>
-          </div>
+          </>
         )}
       </div>
     </div>
