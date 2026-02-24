@@ -1,4 +1,4 @@
-﻿using gis_backend.Services;
+using gis_backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,7 +7,7 @@ namespace gis_backend.Controllers
     [Route("api/users")]
     [Authorize]
     [ApiController]
-    public class UserController :ControllerBase
+    public class UserController : ControllerBase
     {
         private readonly IUserService _service;
 
@@ -28,13 +28,29 @@ namespace gis_backend.Controllers
             {
                 return StatusCode(500, new
                 {
-                    message = "Došlo je do greške na serveru.",
-                    details = ex.Message   
+                    message = "Doslo je do greske na serveru.",
+                    //details = ex.Message
                 });
             }
         }
 
-
-
+        [HttpGet("role/user")]
+        //gat all users where Role=user
+        public async Task<IActionResult> GetAllUsers()
+        {
+            try
+            {
+                var result = await _service.GetAllUsersAsync();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    message = "Doslo je do greske na serveru.",
+                    details = ex.Message
+                });
+            }
+        }
     }
 }

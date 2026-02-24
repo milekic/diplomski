@@ -1,5 +1,6 @@
-﻿using gis_backend.DTOs;
+using gis_backend.DTOs;
 using gis_backend.Mappers;
+using gis_backend.Models.Enums;
 using gis_backend.Repositories;
 
 namespace gis_backend.Services
@@ -21,5 +22,10 @@ namespace gis_backend.Services
             return users.Select(u => u.ToDto()).ToList();
         }
 
+        public async Task<List<UserDto>> GetAllUsersAsync()
+        {
+            var users = await _repo.GetByRoleAsync(UserRole.USER);
+            return users.Select(u => u.ToDto()).ToList();
+        }
     }
 }

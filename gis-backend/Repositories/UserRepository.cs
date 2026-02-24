@@ -1,5 +1,6 @@
-﻿using gis_backend.Data;
+using gis_backend.Data;
 using gis_backend.Models;
+using gis_backend.Models.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace gis_backend.Repositories
@@ -17,6 +18,14 @@ namespace gis_backend.Repositories
         {
             return _context.Users
                 .AsNoTracking()
+                .ToListAsync();
+        }
+
+        public Task<List<User>> GetByRoleAsync(UserRole role)
+        {
+            return _context.Users
+                .AsNoTracking()
+                .Where(u => u.Role == role)
                 .ToListAsync();
         }
 
