@@ -7,20 +7,16 @@ export const getAllUsers = async () => {
 
 const toUsersArray = (users) => (Array.isArray(users) ? users : []);
 
-const getUserNameValue = (user) => user?.username ?? user?.userName ?? "";
-const getUserEmailValue = (user) => user?.email ?? "";
-const isUserSuspended = (user) => Boolean(user?.isSuspended);
-
 export const getTotalUsersCount = (users) => {
   return toUsersArray(users).length;
 };
 
 export const getActiveUsersCount = (users) => {
-  return toUsersArray(users).filter((user) => !isUserSuspended(user)).length;
+  return toUsersArray(users).filter((user) => !user?.isSuspended).length;
 };
 
 export const getSuspendedUsersCount = (users) => {
-  return toUsersArray(users).filter((user) => isUserSuspended(user)).length;
+  return toUsersArray(users).filter((user) => Boolean(user?.isSuspended)).length;
 };
 
 export const getUserStats = (users) => {
@@ -32,11 +28,11 @@ export const getUserStats = (users) => {
 };
 
 export const getUserStatusLabel = (user) => {
-  return isUserSuspended(user) ? "Suspendovan" : "Aktivan";
+  return user?.isSuspended ? "Suspendovan" : "Aktivan";
 };
 
 export const getPrimaryActionForUser = (user) => {
-  if (isUserSuspended(user)) {
+  if (user?.isSuspended) {
     return { label: "Aktiviraj", className: "btn-success" };
   }
 
@@ -49,8 +45,8 @@ export const getUsersForTable = (users) => {
 
     return {
       id: user?.id,
-      username: getUserNameValue(user),
-      email: getUserEmailValue(user),
+      username: user?.username ?? user?.userName ?? "",
+      email: user?.email ?? "",
       statusLabel: getUserStatusLabel(user),
       primaryActionLabel: primaryAction.label,
       primaryActionClassName: primaryAction.className,
