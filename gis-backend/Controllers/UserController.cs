@@ -28,7 +28,7 @@ namespace gis_backend.Controllers
             {
                 return StatusCode(500, new
                 {
-                    message = "Doslo je do greske na serveru.",
+                    message = "Doslo je do greske.",
                     //details = ex.Message
                 });
             }
@@ -48,7 +48,7 @@ namespace gis_backend.Controllers
             {
                 return StatusCode(500, new
                 {
-                    message = "Doslo je do greske na serveru."
+                    message = "Doslo je do greske."
                     //details = ex.Message
                 });
             }
