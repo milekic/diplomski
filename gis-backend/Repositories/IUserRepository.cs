@@ -10,7 +10,9 @@ namespace gis_backend.Repositories
         Task<bool> ExistsByUserNameAsync(string userName);
         Task<bool> ExistsByEmailAsync(string email);
         Task AddAsync(User user);
+        Task<User?> GetByIdAsync(int id);
         Task<User?> GetByUserNameAsync(string userName);
+        Task<bool> SetSuspendedStatusAsync(int id, bool isSuspended);
 
 
     }

@@ -27,5 +27,16 @@ namespace gis_backend.Services
             var users = await _repo.GetByRoleAsync(UserRole.USER);
             return users.Select(u => u.ToDto()).ToList();
         }
+
+        public async Task<UserDto?> GetByIdAsync(int id)
+        {
+            var user = await _repo.GetByIdAsync(id);
+            return user?.ToDto();
+        }
+
+        public async Task<bool> SetSuspendedStatusAsync(int id, bool isSuspended)
+        {
+            return await _repo.SetSuspendedStatusAsync(id, isSuspended);
+        }
     }
 }

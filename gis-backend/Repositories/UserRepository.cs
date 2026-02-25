@@ -45,10 +45,29 @@ namespace gis_backend.Repositories
             await _context.SaveChangesAsync();
         }
 
+        public async Task<User?> GetByIdAsync(int id)
+        {
+            return await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == id);
+        }
+
         public async Task<User?> GetByUserNameAsync(string userName)
         {
             return await _context.Users
                 .FirstOrDefaultAsync(u => u.userName == userName);
+        }
+
+        public async Task<bool> SetSuspendedStatusAsync(int id, bool isSuspended)
+        {
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == id);
+
+            if (user == null)
+                return false;
+
+            user.IsSuspended = isSuspended;
+            await _context.SaveChangesAsync();
+            return true;
         }
 
 

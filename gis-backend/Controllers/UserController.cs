@@ -1,4 +1,5 @@
 using gis_backend.Services;
+using gis_backend.DTOs.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -52,6 +53,25 @@ namespace gis_backend.Controllers
                     //details = ex.Message
                 });
             }
+        }
+
+        [HttpPut("{id:int}/suspension")]
+        [Authorize(Roles = "ADMIN")]
+        public async Task<IActionResult> UpdateSuspensionStatus(int id, [FromBody] UserSuspensionUpdateDto request)
+        {
+            var updated = await _service.SetSuspendedStatusAsync(id, request.IsSuspended);
+
+            if (!updated)
+            {
+                return NotFound(new { message = "Korisnik nije pronadjen." });
+            }
+
+            return Ok(new
+            {
+                id,
+                isSuspended = request.IsSuspended,
+                message = "Azuriranje uspjesno obavljeno."
+            });
         }
     }
 }
