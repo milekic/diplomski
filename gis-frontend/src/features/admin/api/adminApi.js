@@ -6,6 +6,45 @@ export const getAllUsers = async () => {
 };
 
 const toUsersArray = (users) => (Array.isArray(users) ? users : []);
+const normalizeText = (value) => String(value ?? "").trim().toLowerCase();
+
+export const ADMIN_STATUS_FILTER = {
+  ALL: "all",
+  ACTIVE: "active",
+  SUSPENDED: "suspended",
+};
+
+export const ADMIN_STATUS_FILTER_OPTIONS = [
+  { value: ADMIN_STATUS_FILTER.ALL, label: "Svi statusi" },
+  { value: ADMIN_STATUS_FILTER.ACTIVE, label: "Aktivni" },
+  { value: ADMIN_STATUS_FILTER.SUSPENDED, label: "Suspendovani" },
+];
+
+const getUserSearchText = (user) => {
+  const username = user?.username ?? user?.userName ?? "";
+  const email = user?.email ?? "";
+  return normalizeText(`${username} ${email}`);
+};
+
+const matchesStatusFilter = (user, statusFilter) => {
+  if (statusFilter === ADMIN_STATUS_FILTER.ACTIVE) return !user?.isSuspended;
+  if (statusFilter === ADMIN_STATUS_FILTER.SUSPENDED) return Boolean(user?.isSuspended);
+  return true;
+};
+
+export const getFilteredUsers = (
+  users,
+  { searchTerm = "", statusFilter = ADMIN_STATUS_FILTER.ALL } = {}
+) => {
+  const normalizedSearchTerm = normalizeText(searchTerm);
+  const normalizedStatusFilter = normalizeText(statusFilter);
+
+  return toUsersArray(users).filter((user) => {
+    if (!matchesStatusFilter(user, normalizedStatusFilter)) return false;
+    if (!normalizedSearchTerm) return true;
+    return getUserSearchText(user).includes(normalizedSearchTerm);
+  });
+};
 
 export const getTotalUsersCount = (users) => {
   return toUsersArray(users).length;
@@ -52,4 +91,9 @@ export const getUsersForTable = (users) => {
       primaryActionClassName: primaryAction.className,
     };
   });
+};
+
+export const getPaginationPages = (totalPages) => {
+  const safeTotalPages = Math.max(1, Number(totalPages) || 1);
+  return Array.from({ length: safeTotalPages }, (_, index) => index + 1);
 };
