@@ -1,4 +1,4 @@
-﻿namespace gis_backend.DTOs
+﻿namespace gis_backend.DTOs.Users
 {
     public class UserDto
     {
@@ -10,3 +10,4 @@
         public bool IsSuspended { get; set; }
     }
 }
+

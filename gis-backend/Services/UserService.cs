@@ -1,4 +1,4 @@
-using gis_backend.DTOs;
+﻿using gis_backend.DTOs.Users;
 using gis_backend.Mappers;
 using gis_backend.Models.Enums;
 using gis_backend.Repositories;
@@ -40,3 +40,4 @@ namespace gis_backend.Services
         }
     }
 }
+

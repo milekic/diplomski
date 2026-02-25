@@ -1,4 +1,4 @@
-using gis_backend.DTOs;
+﻿using gis_backend.DTOs.Users;
 
 namespace gis_backend.Services
 {
@@ -10,3 +10,4 @@ namespace gis_backend.Services
         Task<bool> SetSuspendedStatusAsync(int id, bool isSuspended);
     }
 }
+

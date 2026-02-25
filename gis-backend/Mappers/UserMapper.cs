@@ -1,4 +1,4 @@
-﻿using gis_backend.DTOs;
+﻿using gis_backend.DTOs.Users;
 using System.Runtime.CompilerServices;
 using gis_backend.Models;
 
@@ -21,3 +21,4 @@ namespace gis_backend.Mappers
         }
     }
 }
+

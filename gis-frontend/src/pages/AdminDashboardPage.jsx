@@ -105,7 +105,7 @@ export default function AdminDashboardPage() {
               <input
                 type="text"
                 className="form-control"
-                placeholder="Pretrazi korisnike..."
+                placeholder="Pretraži korisnike..."
                 value={searchTerm}
                 onChange={handleSearchChange}
               />
