@@ -1,4 +1,4 @@
-using gis_backend.DTOs;
+﻿using gis_backend.DTOs.Users;
 
 namespace gis_backend.Services
 {
@@ -6,5 +6,8 @@ namespace gis_backend.Services
     {
         Task<List<UserDto>> GetAllAsync();
         Task<List<UserDto>> GetAllUsersAsync();
+        Task<UserDto?> GetByIdAsync(int id);
+        Task<bool> SetSuspendedStatusAsync(int id, bool isSuspended);
     }
 }
+

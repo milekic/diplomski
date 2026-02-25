@@ -1,4 +1,5 @@
 using gis_backend.Services;
+using gis_backend.DTOs.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,7 +29,7 @@ namespace gis_backend.Controllers
             {
                 return StatusCode(500, new
                 {
-                    message = "Doslo je do greske na serveru.",
+                    message = "Doslo je do greske.",
                     //details = ex.Message
                 });
             }
@@ -48,10 +49,29 @@ namespace gis_backend.Controllers
             {
                 return StatusCode(500, new
                 {
-                    message = "Doslo je do greske na serveru."
+                    message = "Doslo je do greske."
                     //details = ex.Message
                 });
             }
+        }
+
+        [HttpPut("{id:int}/suspension")]
+        [Authorize(Roles = "ADMIN")]
+        public async Task<IActionResult> UpdateSuspensionStatus(int id, [FromBody] UserSuspensionUpdateDto request)
+        {
+            var updated = await _service.SetSuspendedStatusAsync(id, request.IsSuspended);
+
+            if (!updated)
+            {
+                return NotFound(new { message = "Korisnik nije pronadjen." });
+            }
+
+            return Ok(new
+            {
+                id,
+                isSuspended = request.IsSuspended,
+                message = "Azuriranje uspjesno obavljeno."
+            });
         }
     }
 }

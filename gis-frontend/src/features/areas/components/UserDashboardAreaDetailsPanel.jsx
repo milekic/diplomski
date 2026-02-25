@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import exportFilteredMeasurementsToPdf from "./exportFilteredMeasurementsToPdf";
 import formatMeasurementValue from "./formatMeasurementValue";
-import formatMeasuredTime from "./formatMeasuredTime";
+import formatMeasuredTime from "../../../shared/utils/formatMeasuredTime";
 
 function parseFilterDateStart(dateValue) {
   if (!dateValue) return null;

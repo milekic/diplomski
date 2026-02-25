@@ -1,11 +1,40 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AdminUserStats from "../features/admin/api/AdminUsersStats";
 import AdminUsersTable from "../features/admin/api/AdminUsersTable";
-import { getAllUsers, getUserStats } from "../features/admin/api/adminApi";
+import usePagination from "../shared/hooks/usePagination";
+import { DEFAULT_PAGE_SIZE } from "../shared/constants/mapConstants";
+import {
+  ADMIN_STATUS_FILTER,
+  ADMIN_STATUS_FILTER_OPTIONS,
+  getAllUsers,
+  getFilteredUsers,
+  getNextSuspendedStatus,
+  getUserStats,
+  updateUserSuspensionInList,
+  updateUserSuspensionStatus,
+} from "../features/admin/api/adminApi";
 
 export default function AdminDashboardPage() {
   const [users, setUsers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState(ADMIN_STATUS_FILTER.ALL);
+  const [actionLoadingUserId, setActionLoadingUserId] = useState(null);
+  const [actionError, setActionError] = useState("");
+
   const { totalUsers, activeUsers, suspendedUsers } = getUserStats(users);
+
+  const filteredUsers = useMemo(() => {
+    return getFilteredUsers(users, { searchTerm, statusFilter });
+  }, [users, searchTerm, statusFilter]);
+
+  const {
+    currentPage,
+    totalPages,
+    pagedItems: pagedUsers,
+    next,
+    prev,
+    setCurrentPage,
+  } = usePagination(filteredUsers, DEFAULT_PAGE_SIZE);
 
   useEffect(() => {
     let isMounted = true;
@@ -17,7 +46,7 @@ export default function AdminDashboardPage() {
           setUsers(Array.isArray(data) ? data : []);
         }
       } catch (error) {
-        console.error("Greška pri učitavanju korisnika:", error);
+        console.error("Greska pri ucitavanju korisnika:", error);
         if (isMounted) {
           setUsers([]);
         }
@@ -31,13 +60,39 @@ export default function AdminDashboardPage() {
     };
   }, []);
 
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleStatusFilterChange = (event) => {
+    setStatusFilter(event.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleToggleSuspension = async (user) => {
+    const userId = user?.id;
+    if (userId == null) return;
+
+    const nextIsSuspended = getNextSuspendedStatus(user);
+    setActionError("");
+    setActionLoadingUserId(userId);
+
+    try {
+      await updateUserSuspensionStatus(userId, nextIsSuspended);
+      setUsers((prevUsers) => updateUserSuspensionInList(prevUsers, userId, nextIsSuspended));
+    } catch (error) {
+      setActionError("Nije moguce promijeniti status korisnika. Pokusaj ponovo.");
+    } finally {
+      setActionLoadingUserId(null);
+    }
+  };
+
   return (
     <div className="container-fluid vh-100 d-flex flex-column">
-      {/* ===== MAIN CONTENT ===== */}
       <div className="row flex-grow-1">
-        {/* ===== MAIN ADMIN AREA ===== */}
         <div className="col-12 p-4">
-          <h5 className="mb-4">Upravljanje korisnicima</h5>
+          
 
           <AdminUserStats
             totalUsers={totalUsers}
@@ -45,27 +100,44 @@ export default function AdminDashboardPage() {
             suspendedUsers={suspendedUsers}
           />
 
-          {/* ===== SEARCH + FILTER ===== */}
           <div className="row mb-3">
             <div className="col-md-6">
               <input
                 type="text"
                 className="form-control"
                 placeholder="Pretraži korisnike..."
+                value={searchTerm}
+                onChange={handleSearchChange}
               />
             </div>
 
             <div className="col-md-3">
-              <select className="form-select">
-                <option>Svi statusi</option>
-                <option>Aktivni</option>
-                <option>Suspendovani</option>
+              <select className="form-select" value={statusFilter} onChange={handleStatusFilterChange}>
+                {ADMIN_STATUS_FILTER_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
 
-          {/* ===== USERS TABLE ===== */}
-          <AdminUsersTable users={users} />
+          {actionError ? (
+            <div className="alert alert-danger py-2" role="alert">
+              {actionError}
+            </div>
+          ) : null}
+
+          <AdminUsersTable
+            users={pagedUsers}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPrev={prev}
+            onNext={next}
+            onGoToPage={setCurrentPage}
+            actionLoadingUserId={actionLoadingUserId}
+            onToggleSuspension={handleToggleSuspension}
+          />
         </div>
       </div>
     </div>
