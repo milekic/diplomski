@@ -7,9 +7,12 @@ export default function AdminUsersTable({
   onPrev = () => {},
   onNext = () => {},
   onGoToPage = () => {},
+  actionLoadingUserId = null,
+  onToggleSuspension = () => {},
 }) {
   const tableUsers = getUsersForTable(users);
   const pages = getPaginationPages(totalPages);
+  const isActionLoadingForUser = (userId) => String(actionLoadingUserId ?? "") === String(userId ?? "");
 
   return (
     <div className="d-flex flex-column">
@@ -38,7 +41,12 @@ export default function AdminUsersTable({
                   <td>{user.email}</td>
                   <td>{user.statusLabel}</td>
                   <td>
-                    <button className={`btn btn-sm me-1 ${user.primaryActionClassName}`} type="button">
+                    <button
+                      className={`btn btn-sm me-1 ${user.primaryActionClassName}`}
+                      type="button"
+                      onClick={() => onToggleSuspension(user)}
+                      disabled={isActionLoadingForUser(user.id) || user.id == null}
+                    >
                       {user.primaryActionLabel}
                     </button>
                   </td>

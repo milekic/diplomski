@@ -5,8 +5,16 @@ export const getAllUsers = async () => {
   return response.data;
 };
 
+export const updateUserSuspensionStatus = async (userId, isSuspended) => {
+  const response = await apiClient.put(`/users/${userId}/suspension`, {
+    isSuspended: Boolean(isSuspended),
+  });
+  return response.data;
+};
+
 const toUsersArray = (users) => (Array.isArray(users) ? users : []);
 const normalizeText = (value) => String(value ?? "").trim().toLowerCase();
+const toComparableId = (value) => String(value ?? "");
 
 export const ADMIN_STATUS_FILTER = {
   ALL: "all",
@@ -78,6 +86,17 @@ export const getPrimaryActionForUser = (user) => {
   return { label: "Suspenduj", className: "btn-warning" };
 };
 
+export const getNextSuspendedStatus = (user) => {
+  return !Boolean(user?.isSuspended);
+};
+
+export const updateUserSuspensionInList = (users, userId, isSuspended) => {
+  return toUsersArray(users).map((user) => {
+    if (toComparableId(user?.id) !== toComparableId(userId)) return user;
+    return { ...user, isSuspended: Boolean(isSuspended) };
+  });
+};
+
 export const getUsersForTable = (users) => {
   return toUsersArray(users).map((user) => {
     const primaryAction = getPrimaryActionForUser(user);
@@ -86,6 +105,7 @@ export const getUsersForTable = (users) => {
       id: user?.id,
       username: user?.username ?? user?.userName ?? "",
       email: user?.email ?? "",
+      isSuspended: Boolean(user?.isSuspended),
       statusLabel: getUserStatusLabel(user),
       primaryActionLabel: primaryAction.label,
       primaryActionClassName: primaryAction.className,

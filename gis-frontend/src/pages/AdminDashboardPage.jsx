@@ -8,13 +8,18 @@ import {
   ADMIN_STATUS_FILTER_OPTIONS,
   getAllUsers,
   getFilteredUsers,
+  getNextSuspendedStatus,
   getUserStats,
+  updateUserSuspensionInList,
+  updateUserSuspensionStatus,
 } from "../features/admin/api/adminApi";
 
 export default function AdminDashboardPage() {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState(ADMIN_STATUS_FILTER.ALL);
+  const [actionLoadingUserId, setActionLoadingUserId] = useState(null);
+  const [actionError, setActionError] = useState("");
 
   const { totalUsers, activeUsers, suspendedUsers } = getUserStats(users);
 
@@ -65,6 +70,24 @@ export default function AdminDashboardPage() {
     setCurrentPage(1);
   };
 
+  const handleToggleSuspension = async (user) => {
+    const userId = user?.id;
+    if (userId == null) return;
+
+    const nextIsSuspended = getNextSuspendedStatus(user);
+    setActionError("");
+    setActionLoadingUserId(userId);
+
+    try {
+      await updateUserSuspensionStatus(userId, nextIsSuspended);
+      setUsers((prevUsers) => updateUserSuspensionInList(prevUsers, userId, nextIsSuspended));
+    } catch (error) {
+      setActionError("Nije moguce promijeniti status korisnika. Pokusaj ponovo.");
+    } finally {
+      setActionLoadingUserId(null);
+    }
+  };
+
   return (
     <div className="container-fluid vh-100 d-flex flex-column">
       <div className="row flex-grow-1">
@@ -99,6 +122,12 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
+          {actionError ? (
+            <div className="alert alert-danger py-2" role="alert">
+              {actionError}
+            </div>
+          ) : null}
+
           <AdminUsersTable
             users={pagedUsers}
             currentPage={currentPage}
@@ -106,6 +135,8 @@ export default function AdminDashboardPage() {
             onPrev={prev}
             onNext={next}
             onGoToPage={setCurrentPage}
+            actionLoadingUserId={actionLoadingUserId}
+            onToggleSuspension={handleToggleSuspension}
           />
         </div>
       </div>
