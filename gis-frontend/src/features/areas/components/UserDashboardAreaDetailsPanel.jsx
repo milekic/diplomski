@@ -1,30 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-
-function formatMeasuredTime(measuredAtUtc) {
-  if (!measuredAtUtc) return "-";
-
-  const date = new Date(measuredAtUtc);
-  if (Number.isNaN(date.getTime())) return "-";
-
-  const parts = new Intl.DateTimeFormat("bs-BA", {
-    timeZone: "Europe/Sarajevo",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  }).formatToParts(date);
-
-  const get = (type) => parts.find((p) => p.type === type)?.value ?? "00";
-  return `${get("day")}.${get("month")}.${get("year")} ${get("hour")}:${get("minute")}:${get("second")}`;
-}
-
-function formatValue(value, unit) {
-  if (value == null) return "-";
-  return unit ? `${value} ${unit}` : String(value);
-}
+import exportFilteredMeasurementsToPdf from "./exportFilteredMeasurementsToPdf";
+import formatMeasurementValue from "./formatMeasurementValue";
+import formatMeasuredTime from "./formatMeasuredTime";
 
 function parseFilterDateStart(dateValue) {
   if (!dateValue) return null;
@@ -63,6 +40,14 @@ export default function UserDashboardAreaDetailsPanel({ area, measurements = [] 
   }, [measurements]);
 
   useEffect(() => {
+    if (eventTypeOptions.length === 1) {
+      const singleEventType = eventTypeOptions[0];
+      if (eventTypeFilter !== singleEventType) {
+        setEventTypeFilter(singleEventType);
+      }
+      return;
+    }
+
     if (eventTypeFilter === "all") return;
     if (!eventTypeOptions.includes(eventTypeFilter)) {
       setEventTypeFilter("all");
@@ -96,13 +81,28 @@ export default function UserDashboardAreaDetailsPanel({ area, measurements = [] 
     });
   }, [measurements, eventTypeFilter, criticalOnly, dateFrom, dateTo]);
 
-  const hasActiveFilters = eventTypeFilter !== "all" || criticalOnly || dateFrom || dateTo;
+  const isEventTypeFilterActive = eventTypeOptions.length > 1 && eventTypeFilter !== "all";
+  const hasActiveFilters = isEventTypeFilterActive || criticalOnly || dateFrom || dateTo;
+  const canExportFilteredMeasurements = !isInvalidDateRange && filteredMeasurements.length > 0;
 
   const clearFilters = () => {
-    setEventTypeFilter("all");
+    setEventTypeFilter(eventTypeOptions.length > 1 ? "all" : (eventTypeOptions[0] ?? "all"));
     setDateFrom("");
     setDateTo("");
     setCriticalOnly(false);
+  };
+
+  const handleExportFilteredToPdf = () => {
+    if (!canExportFilteredMeasurements) return;
+
+    const isOpened = exportFilteredMeasurementsToPdf({
+      areaName,
+      measurements: filteredMeasurements,
+    });
+
+    if (!isOpened) {
+      window.alert("Pregled za štampu je blokiran. Omogućite popup prozore za ovu stranicu.");
+    }
   };
 
   return (
@@ -134,7 +134,7 @@ export default function UserDashboardAreaDetailsPanel({ area, measurements = [] 
                       value={eventTypeFilter}
                       onChange={(event) => setEventTypeFilter(event.target.value)}
                     >
-                      <option value="all">Svi tipovi</option>
+                      {eventTypeOptions.length > 1 && <option value="all">Svi tipovi</option>}
                       {eventTypeOptions.map((eventType) => (
                         <option key={eventType} value={eventType}>
                           {eventType}
@@ -185,10 +185,21 @@ export default function UserDashboardAreaDetailsPanel({ area, measurements = [] 
                         className="btn btn-sm btn-outline-secondary w-100"
                         onClick={clearFilters}
                       >
-                        Ocisti filtere
+                        Očisti filtere
                       </button>
                     </div>
                   )}
+
+                  <div className="col-12">
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-primary w-100"
+                      onClick={handleExportFilteredToPdf}
+                      disabled={!canExportFilteredMeasurements}
+                    >
+                      Izvezi u PDF
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -216,7 +227,7 @@ export default function UserDashboardAreaDetailsPanel({ area, measurements = [] 
                         <tr key={measurement.id}>
                           <td className="small">{measurement.eventTypeName ?? "-"}</td>
                           <td className="small text-nowrap">
-                            {formatValue(measurement.value, measurement.unit)}
+                            {formatMeasurementValue(measurement.value, measurement.unit)}
                           </td>
                           <td className="small text-nowrap">{formatMeasuredTime(measurement.measuredAtUtc)}</td>
                         </tr>

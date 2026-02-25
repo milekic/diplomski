@@ -17,6 +17,7 @@ export function buildSelectedEventDetails(
     eventTypeName: eventTypeNameById?.[eventTypeId] ?? "-",
     eventTypeUnit: eventTypeUnitById?.[eventTypeId] ?? "",
     value: feature.get("value"),
+    threshold: feature.get("threshold"),
     measuredAtUtc: feature.get("measuredAtUtc"),
     x: lonLat?.[0],
     y: lonLat?.[1],
