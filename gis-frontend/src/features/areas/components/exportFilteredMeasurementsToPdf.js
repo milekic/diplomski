@@ -1,4 +1,4 @@
-import formatMeasuredTime from "./formatMeasuredTime";
+import formatMeasuredTime from "../../../shared/utils/formatMeasuredTime";
 import formatMeasurementValue from "./formatMeasurementValue";
 
 function escapeHtml(value) {

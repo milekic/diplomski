@@ -1,6 +1,6 @@
 import React from "react";
 import formatEventLocation from "./formatEventLocation";
-import formatMeasuredTime from "./formatMeasuredTime";
+import formatMeasuredTime from "../../../shared/utils/formatMeasuredTime";
 import { getThresholdExceedanceText } from "./thresholdExceedanceUtils";
 
 export default function EventDetailsModal({ show, event, onClose }) {
