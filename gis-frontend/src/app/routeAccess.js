@@ -3,6 +3,7 @@
 export const routeAccess = [
   { prefix: "/areas", roles: ["USER"] },
   { prefix: "/userDashboard", roles: ["USER"] },
+  { prefix: "/myProfile", roles: ["USER", "ADMIN"] },
 
 
   { prefix: "/adminDashboard", roles: ["ADMIN"] },

@@ -1,0 +1,19 @@
+.my-profile-page {
+  min-height: 100%;
+  background: linear-gradient(180deg, #f8fbff 0%, #f3f7fc 100%);
+}
+
+.my-profile-card {
+  border: 1px solid #e5edf7 !important;
+  border-radius: 0.9rem;
+  background: #ffffff;
+}
+
+.my-profile-card .form-control {
+  border-color: #d9e5f3;
+}
+
+.my-profile-card .form-control:focus {
+  border-color: #9fc2f1;
+  box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.15);
+}

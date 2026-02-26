@@ -1,5 +1,4 @@
 import { Link, NavLink } from "react-router-dom";
-import { getUserFromToken } from "../../features/auth/token";
 
 export default function AppNavbar({ userLabel, role, onLogout }) {
 
@@ -61,9 +60,9 @@ export default function AppNavbar({ userLabel, role, onLogout }) {
         {/* ===== Right side ===== */}
         <div className="d-flex align-items-center gap-3">
 
-          <span className="text-secondary small fw-medium">
+          <Link to="/myProfile" className="text-secondary small fw-medium text-decoration-none">
             {userLabel}
-          </span>
+          </Link>
 
           <button
             className="btn btn-outline-danger btn-sm px-3"
