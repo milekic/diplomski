@@ -36,3 +36,7 @@ export const getCurrentUserProfile = async ({ token, username } = {}) => {
   };
 };
 
+export const updateUserProfile = async (userId, payload) => {
+  const response = await apiClient.put(`/users/${userId}/profile`, payload);
+  return response.data;
+};
