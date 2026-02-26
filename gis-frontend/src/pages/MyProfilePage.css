@@ -17,3 +17,13 @@
   border-color: #9fc2f1;
   box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.15);
 }
+
+.my-profile-save-btn {
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.my-profile-save-btn:hover:not(:disabled),
+.my-profile-save-btn:focus-visible:not(:disabled) {
+  background-color: #022150;
+  border-color: #084298;
+}

@@ -9,11 +9,12 @@ export default function ProfileCard({
     <div className="card border-0 shadow-sm h-100 my-profile-card">
       <div className="card-body p-4">
         <h2 className="h5 mb-3">Profil</h2>
+          <p className="text-secondary mb-3">Izmijenite korisničko ime i email pa sačuvajte promjene.</p>
 
         <form onSubmit={onSaveProfile}>
           <div className="mb-3">
             <label htmlFor="profile-username" className="form-label">
-              Korisnicko ime
+              Korisničko ime
             </label>
             <input
               id="profile-username"
@@ -45,10 +46,10 @@ export default function ProfileCard({
 
           <button
             type="submit"
-            className="btn btn-primary px-4"
+            className="btn btn-primary px-4 my-profile-save-btn"
             disabled={loadingProfile || savingProfile}
           >
-            {loadingProfile ? "Ucitavanje..." : savingProfile ? "Cuvanje..." : "Sacuvaj izmjene"}
+            {loadingProfile ? "Učitavanje..." : savingProfile ? "Čuvanje..." : "Sačuvaj izmjene"}
           </button>
         </form>
       </div>

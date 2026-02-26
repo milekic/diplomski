@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { getCurrentUserProfile, updateUserProfile } from "../features/profile/api/profileApi";
+import { setUsername } from "../features/auth/authSlice";
 import ProfileCard from "../features/profile/components/ProfileCard";
 import "./MyProfilePage.css";
 
 export default function MyProfilePage() {
   const { token, username } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
   const profileNoticeTimeoutRef = useRef(null);
 
   const [profileId, setProfileId] = useState(null);
@@ -128,6 +130,7 @@ export default function MyProfilePage() {
 
       setProfileForm(payload);
       setInitialProfile(payload);
+      dispatch(setUsername(payload.userName));
       setProfileSuccess(result?.message ?? "Profil je uspjesno azuriran.");
       scheduleProfileNoticeClear();
     } catch (error) {
@@ -152,7 +155,7 @@ export default function MyProfilePage() {
       <div className="container">
         <div className="mb-4">
           <h1 className="h3 mb-1">Moj profil</h1>
-          <p className="text-secondary mb-0">Izmijenite korisnicko ime i email pa sacuvajte promjene.</p>
+          
         </div>
 
         {profileError && (
