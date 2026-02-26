@@ -29,8 +29,6 @@ export default function MyProfilePage() {
 
     const loadCurrentProfile = async () => {
       setLoadingProfile(true);
-      setProfileError("");
-      setProfileSuccess("");
 
       try {
         const profile = await getCurrentUserProfile({ token, username });
