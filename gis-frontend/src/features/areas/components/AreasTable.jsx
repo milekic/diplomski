@@ -91,7 +91,13 @@ export default function AreasTable({
         <div className="card-body p-2 p-md-3 d-flex flex-column h-100">
           {/* Table */}
           <div className="table-responsive border rounded-3 flex-grow-1">
-            <table className="table table-sm table-hover table-striped align-middle mb-0">
+            <table
+              className="table table-sm table-hover table-striped align-middle mb-0"
+              style={{
+                "--bs-table-hover-bg": "#e7f1ff",
+                "--bs-table-active-bg": "#e7f1ff",
+              }}
+            >
               <thead
                 className="table-primary position-sticky top-0 text-uppercase small"
                 style={{ zIndex: 1 }}
