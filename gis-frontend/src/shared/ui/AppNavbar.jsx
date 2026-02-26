@@ -26,7 +26,7 @@ export default function AppNavbar({ userLabel, role, onLogout }) {
           {role === "USER" && (
           <li className="nav-item">
             <NavLink to="/userDashboard" end className={linkClass}>
-              Početna
+              Mapa
             </NavLink>
           </li>
           )}
