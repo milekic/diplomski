@@ -13,7 +13,6 @@ export default function AreasTable({
   onAdd = () => {},
   onEdit = () => {},
   onDelete = () => {},
-  onViewDetails = () => {},
   onManageEvents = () => {},
 }) {
   return (
@@ -27,17 +26,6 @@ export default function AreasTable({
 
           <div className="btn-toolbar gap-2">
             <div className="btn-group btn-group-sm" role="group" aria-label="Akcije oblasti">
-              <button
-                type="button"
-                className="btn btn-outline-secondary"
-                onClick={onViewDetails}
-                disabled={!selectedId}
-                title="Pregled detalja"
-                aria-label="Pregled detalja"
-              >
-                <i className="bi bi-eye" />
-              </button>
-
               <button
                 type="button"
                 className="btn btn-outline-dark"

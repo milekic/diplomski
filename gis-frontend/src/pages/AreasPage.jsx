@@ -232,7 +232,6 @@ const onConfirmEvents = async (selectedEvents) => {
 
 
               onDelete={onAskDelete}
-              onViewDetails={() => console.log("Pregled detalja")}
             />
           )}
         </div>
