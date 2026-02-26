@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import AreasTable from "../features/areas/components/AreasTable";
-import AreaDetailsPanel from "../features/areas/components/AreaDetailsPanel";
+// import AreaDetailsPanel from "../features/areas/components/AreaDetailsPanel";
 import { getMyAreas, deleteArea, createArea, updateArea } from "../features/areas/components/areasApi";
 import usePagination from "../shared/hooks/usePagination";
 import ConfirmModal from "../shared/ui/ConfirmModal";
@@ -69,7 +69,7 @@ export default function AreasPage() {
 };
 
 
-  // klik na dugme za brisanje 
+
   const onAskDelete = () => {
     if (!selectedArea) return;
     setShowDeleteModal(true);
@@ -81,7 +81,7 @@ export default function AreasPage() {
  };
 
 
-  // OK u modalu 
+ 
   const onConfirmDelete = async () => {
     if (!selectedArea) return;
 
@@ -136,12 +136,12 @@ const onConfirmEvents = async (selectedEvents) => {
     setError(null);
     setSuccess(null);
 
-    // pretvori { id: "12.3" } -> { id: 12.3 }
+    
     const selected = {};
     for (const [eventTypeIdStr, value] of Object.entries(selectedEvents)) {
       const eventTypeId = Number(eventTypeIdStr);
 
-      // validate već radi u modalu, ali svejedno:
+      
       const num = Number(String(value).trim());
       selected[eventTypeId] = Number.isFinite(num) ? num : null;
     }
@@ -151,8 +151,6 @@ const onConfirmEvents = async (selectedEvents) => {
     showSuccess("Praćenja su uspješno sačuvana ✅");
     setShowEventsModal(false);
 
-    // opciono: ako želiš da odmah osvježiš detalje / listu
-    // await loadAreas();
 
   } catch (e) {
     setError(e?.message ?? "Došlo je do greške pri čuvanju praćenja.");
@@ -190,7 +188,7 @@ const onConfirmEvents = async (selectedEvents) => {
 
 
 
-        <div className="col-8 d-flex flex-column">
+        <div className="col-12 d-flex flex-column">
           {loading ? (
             <div className="text-center mt-5 text-muted">Učitavanje podataka...</div>
           ) : (
@@ -239,9 +237,9 @@ const onConfirmEvents = async (selectedEvents) => {
           )}
         </div>
 
-        <div className="col-4">
+        {/* <div className="col-4">
           <AreaDetailsPanel area={selectedArea} />
-        </div>
+        </div> */}
       </div>
 
       <ConfirmModal
