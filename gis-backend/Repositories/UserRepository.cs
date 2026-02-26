@@ -34,9 +34,19 @@ namespace gis_backend.Repositories
             return await _context.Users.AnyAsync(u => u.userName == userName);
         }
 
+        public async Task<bool> ExistsByUserNameAsync(string userName, int excludeUserId)
+        {
+            return await _context.Users.AnyAsync(u => u.userName == userName && u.Id != excludeUserId);
+        }
+
         public async Task<bool> ExistsByEmailAsync(string email)
         {
             return await _context.Users.AnyAsync(u => u.Email == email);
+        }
+
+        public async Task<bool> ExistsByEmailAsync(string email, int excludeUserId)
+        {
+            return await _context.Users.AnyAsync(u => u.Email == email && u.Id != excludeUserId);
         }
 
         public async Task AddAsync(User user)
@@ -66,6 +76,33 @@ namespace gis_backend.Repositories
                 return false;
 
             user.IsSuspended = isSuspended;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> UpdateProfileAsync(int id, string userName, string email)
+        {
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == id);
+
+            if (user == null)
+                return false;
+
+            user.userName = userName;
+            user.Email = email;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> UpdatePasswordHashAsync(int id, string passwordHash)
+        {
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == id);
+
+            if (user == null)
+                return false;
+
+            user.PasswordHash = passwordHash;
             await _context.SaveChangesAsync();
             return true;
         }
