@@ -1,4 +1,5 @@
 import { Link, NavLink } from "react-router-dom";
+import "./AppNavbar.css";
 
 export default function AppNavbar({ userLabel, role, onLogout }) {
 
@@ -8,7 +9,7 @@ export default function AppNavbar({ userLabel, role, onLogout }) {
 
 
   return (
-    <nav className="navbar navbar-expand-lg bg-white border-bottom shadow-sm py-2">
+    <nav className="navbar navbar-expand-lg bg-white border-bottom shadow-sm py-2 app-navbar">
       <div className="container-fluid">
 
         {/* ===== Left side ===== */}
@@ -39,9 +40,6 @@ export default function AppNavbar({ userLabel, role, onLogout }) {
           )}
 
          
-
-
-
           {/* Početna za ADMIN-a */}
           {role === "ADMIN" && (
           <li className="nav-item">
@@ -51,8 +49,6 @@ export default function AppNavbar({ userLabel, role, onLogout }) {
           </li>
           )}
 
-          
-         
 
         </ul>
 
@@ -60,7 +56,7 @@ export default function AppNavbar({ userLabel, role, onLogout }) {
         {/* ===== Right side ===== */}
         <div className="d-flex align-items-center gap-3">
 
-          <Link to="/myProfile" className="text-secondary small fw-medium text-decoration-none">
+          <Link to="/myProfile" className="text-secondary small fw-medium text-decoration-none profile-link">
             {userLabel}
           </Link>
 
