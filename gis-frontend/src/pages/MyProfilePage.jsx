@@ -101,7 +101,7 @@ export default function MyProfilePage() {
     };
 
     if (!payload.userName || !payload.email) {
-      setProfileError("Korisnicko ime i email su obavezni.");
+      setProfileError("Korisničko ime i email su obavezni.");
       scheduleProfileNoticeClear();
       return;
     }
@@ -117,7 +117,7 @@ export default function MyProfilePage() {
       payload.email.toLowerCase() === initialProfile.email.toLowerCase();
 
     if (noChanges) {
-      setProfileSuccess("Nema novih izmjena za cuvanje.");
+      setProfileSuccess("Nema novih izmjena.");
       scheduleProfileNoticeClear();
       return;
     }
@@ -129,10 +129,10 @@ export default function MyProfilePage() {
       setProfileForm(payload);
       setInitialProfile(payload);
       dispatch(setUsername(payload.userName));
-      setProfileSuccess(result?.message ?? "Profil je uspjesno azuriran.");
+      setProfileSuccess(result?.message ?? "Profil je uspješno ažuriran.");
       scheduleProfileNoticeClear();
     } catch (error) {
-      const message = error?.response?.data?.message ?? "Neuspjesno cuvanje izmjena profila.";
+      const message = error?.response?.data?.message ?? "Neuspješno čuvanje izmjena profila.";
       setProfileError(message);
       scheduleProfileNoticeClear();
     } finally {
