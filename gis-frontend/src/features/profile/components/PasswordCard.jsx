@@ -64,7 +64,7 @@ export default function PasswordCard({
 
           <button
             type="submit"
-            className="btn btn-outline-primary px-4"
+            className="btn btn-primary px-4 my-profile-save-btn"
             disabled={loadingProfile || savingPassword}
           >
             {savingPassword ? "Čuvanje..." : "Promijeni lozinku"}
