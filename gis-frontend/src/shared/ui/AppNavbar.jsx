@@ -1,5 +1,5 @@
 import { Link, NavLink } from "react-router-dom";
-import { getUserFromToken } from "../../features/auth/token";
+import "./AppNavbar.css";
 
 export default function AppNavbar({ userLabel, role, onLogout }) {
 
@@ -9,7 +9,7 @@ export default function AppNavbar({ userLabel, role, onLogout }) {
 
 
   return (
-    <nav className="navbar navbar-expand-lg bg-white border-bottom shadow-sm py-2">
+    <nav className="navbar navbar-expand-lg bg-white border-bottom shadow-sm py-2 app-navbar">
       <div className="container-fluid">
 
         {/* ===== Left side ===== */}
@@ -26,7 +26,7 @@ export default function AppNavbar({ userLabel, role, onLogout }) {
           {role === "USER" && (
           <li className="nav-item">
             <NavLink to="/userDashboard" end className={linkClass}>
-              Početna
+              Mapa
             </NavLink>
           </li>
           )}
@@ -40,9 +40,6 @@ export default function AppNavbar({ userLabel, role, onLogout }) {
           )}
 
          
-
-
-
           {/* Početna za ADMIN-a */}
           {role === "ADMIN" && (
           <li className="nav-item">
@@ -52,8 +49,6 @@ export default function AppNavbar({ userLabel, role, onLogout }) {
           </li>
           )}
 
-          
-         
 
         </ul>
 
@@ -61,9 +56,9 @@ export default function AppNavbar({ userLabel, role, onLogout }) {
         {/* ===== Right side ===== */}
         <div className="d-flex align-items-center gap-3">
 
-          <span className="text-secondary small fw-medium">
+          <Link to="/myProfile" className="text-secondary small fw-medium text-decoration-none profile-link">
             {userLabel}
-          </span>
+          </Link>
 
           <button
             className="btn btn-outline-danger btn-sm px-3"

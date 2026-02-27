@@ -2,6 +2,7 @@ using gis_backend.Services;
 using gis_backend.DTOs.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace gis_backend.Controllers
 {
@@ -72,6 +73,50 @@ namespace gis_backend.Controllers
                 isSuspended = request.IsSuspended,
                 message = "Azuriranje uspjesno obavljeno."
             });
+        }
+
+        //izmjena profila -korisnicko ime, lozinka
+        [HttpPut("{id:int}/profile")]
+        public async Task<IActionResult> UpdateProfile(int id, [FromBody] UserProfileUpdateDto request)
+        {
+            if (!CanManageUser(id))
+                return Forbid();
+
+            var result = await _service.UpdateProfileAsync(id, request);
+            if (!result.ok)
+                return StatusCode(result.statusCode, new { message = result.message });
+
+            return Ok(new
+            {
+                id,
+                message = result.message
+            });
+        }
+
+        [HttpPut("{id:int}/password")]
+        public async Task<IActionResult> ChangePassword(int id, [FromBody] UserPasswordChangeDto request)
+        {
+            if (!CanManageUser(id))
+                return Forbid();
+
+            var result = await _service.ChangePasswordAsync(id, request);
+            if (!result.ok)
+                return StatusCode(result.statusCode, new { message = result.message });
+
+            return Ok(new
+            {
+                id,
+                message = result.message
+            });
+        }
+
+        private bool CanManageUser(int requestedUserId)
+        {
+            if (User.IsInRole("ADMIN"))
+                return true;
+
+            var claimValue = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            return int.TryParse(claimValue, out var currentUserId) && currentUserId == requestedUserId;
         }
     }
 }

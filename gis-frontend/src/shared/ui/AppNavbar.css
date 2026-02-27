@@ -1,0 +1,11 @@
+.app-navbar .nav-link,
+.app-navbar .profile-link {
+  transition: color 0.2s ease;
+}
+
+.app-navbar .nav-link:hover,
+.app-navbar .nav-link:focus-visible,
+.app-navbar .profile-link:hover,
+.app-navbar .profile-link:focus-visible {
+  color: #6cb6ff !important;
+}
