@@ -1,8 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getCurrentUserProfile, updateUserProfile } from "../features/profile/api/profileApi";
+import {
+  changeUserPassword,
+  getCurrentUserProfile,
+  updateUserProfile,
+} from "../features/profile/api/profileApi";
 import { setUsername } from "../features/auth/authSlice";
 import ProfileCard from "../features/profile/components/ProfileCard";
+import PasswordCard from "../features/profile/components/PasswordCard";
 import "./MyProfilePage.css";
 
 export default function MyProfilePage() {
@@ -21,8 +26,14 @@ export default function MyProfilePage() {
   });
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
   const [profileError, setProfileError] = useState("");
   const [profileSuccess, setProfileSuccess] = useState("");
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmNewPassword: "",
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -66,6 +77,15 @@ export default function MyProfilePage() {
   const onProfileFieldChange = (event) => {
     const { name, value } = event.target;
     setProfileForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    setProfileSuccess("");
+  };
+
+  const onPasswordFieldChange = (event) => {
+    const { name, value } = event.target;
+    setPasswordForm((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -140,6 +160,61 @@ export default function MyProfilePage() {
     }
   };
 
+  const onChangePassword = async (event) => {
+    event.preventDefault();
+
+    if (profileNoticeTimeoutRef.current) {
+      clearTimeout(profileNoticeTimeoutRef.current);
+      profileNoticeTimeoutRef.current = null;
+    }
+
+    setProfileError("");
+    setProfileSuccess("");
+
+    const payload = {
+      currentPassword: passwordForm.currentPassword,
+      newPassword: passwordForm.newPassword,
+      confirmNewPassword: passwordForm.confirmNewPassword,
+    };
+
+    if (!payload.currentPassword || !payload.newPassword || !payload.confirmNewPassword) {
+      setProfileError("Sva polja za promjenu lozinke su obavezna.");
+      scheduleProfileNoticeClear();
+      return;
+    }
+
+    if (!profileId) {
+      setProfileError("Nije moguce odrediti korisnika za izmjenu lozinke.");
+      scheduleProfileNoticeClear();
+      return;
+    }
+
+    if (payload.newPassword !== payload.confirmNewPassword) {
+      setProfileError("Potvrda lozinke se ne poklapa.");
+      scheduleProfileNoticeClear();
+      return;
+    }
+
+    try {
+      setSavingPassword(true);
+      const result = await changeUserPassword(profileId, payload);
+
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmNewPassword: "",
+      });
+      setProfileSuccess(result?.message ?? "Lozinka je uspjesno promijenjena.");
+      scheduleProfileNoticeClear();
+    } catch (error) {
+      const message = error?.response?.data?.message ?? "Neuspjesna izmjena lozinke.";
+      setProfileError(message);
+      scheduleProfileNoticeClear();
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
   useEffect(() => {
     return () => {
       if (profileNoticeTimeoutRef.current) {
@@ -179,51 +254,13 @@ export default function MyProfilePage() {
           </div>
 
           <div className="col-12 col-lg-6">
-            <div className="card border-0 shadow-sm h-100 my-profile-card">
-              <div className="card-body p-4">
-                <h2 className="h5 mb-3">Sigurnost</h2>
-
-                <div className="mb-3">
-                  <label htmlFor="current-password" className="form-label">
-                    Trenutna lozinka
-                  </label>
-                  <input
-                    id="current-password"
-                    type="password"
-                    className="form-control"
-                    placeholder="Unesite trenutnu lozinku"
-                  />
-                </div>
-
-                <div className="mb-3">
-                  <label htmlFor="new-password" className="form-label">
-                    Nova lozinka
-                  </label>
-                  <input
-                    id="new-password"
-                    type="password"
-                    className="form-control"
-                    placeholder="Unesite novu lozinku"
-                  />
-                </div>
-
-                <div className="mb-4">
-                  <label htmlFor="confirm-password" className="form-label">
-                    Potvrdi novu lozinku
-                  </label>
-                  <input
-                    id="confirm-password"
-                    type="password"
-                    className="form-control"
-                    placeholder="Ponovo unesite novu lozinku"
-                  />
-                </div>
-
-                <button type="button" className="btn btn-outline-primary px-4">
-                  Promijeni lozinku
-                </button>
-              </div>
-            </div>
+            <PasswordCard
+              passwordForm={passwordForm}
+              loadingProfile={loadingProfile}
+              savingPassword={savingPassword}
+              onPasswordFieldChange={onPasswordFieldChange}
+              onChangePassword={onChangePassword}
+            />
           </div>
         </div>
       </div>

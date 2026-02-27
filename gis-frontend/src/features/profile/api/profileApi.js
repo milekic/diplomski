@@ -40,3 +40,8 @@ export const updateUserProfile = async (userId, payload) => {
   const response = await apiClient.put(`/users/${userId}/profile`, payload);
   return response.data;
 };
+
+export const changeUserPassword = async (userId, payload) => {
+  const response = await apiClient.put(`/users/${userId}/password`, payload);
+  return response.data;
+};

@@ -8,7 +8,7 @@ export default function ProfileCard({
   return (
     <div className="card border-0 shadow-sm h-100 my-profile-card">
       <div className="card-body p-4">
-        <h2 className="h5 mb-3">Profil</h2>
+        <h2 className="h5 mb-3">Izmjena profila</h2>
           <p className="text-secondary mb-3">Izmijenite korisničko ime i email pa sačuvajte promjene.</p>
 
         <form onSubmit={onSaveProfile}>
