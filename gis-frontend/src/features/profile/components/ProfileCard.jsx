@@ -5,6 +5,10 @@ export default function ProfileCard({
   onProfileFieldChange,
   onSaveProfile,
 }) {
+  const isProfileFormValid =
+    profileForm.userName.trim().length > 0 &&
+    profileForm.email.trim().length > 0;
+
   return (
     <div className="card border-0 shadow-sm h-100 my-profile-card">
       <div className="card-body p-4">
@@ -47,7 +51,7 @@ export default function ProfileCard({
           <button
             type="submit"
             className="btn btn-primary px-4 my-profile-save-btn"
-            disabled={loadingProfile || savingProfile}
+            disabled={loadingProfile || savingProfile || !isProfileFormValid}
           >
             {loadingProfile ? "Učitavanje..." : savingProfile ? "Čuvanje..." : "Sačuvaj izmjene"}
           </button>
