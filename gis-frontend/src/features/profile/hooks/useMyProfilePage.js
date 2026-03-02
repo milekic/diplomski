@@ -186,6 +186,12 @@ export default function useMyProfilePage() {
       return;
     }
 
+    if (payload.newPassword.length < 8) {
+      setProfileError("Nova lozinka mora imati najmanje 8 karaktera.");
+      scheduleProfileNoticeClear();
+      return;
+    }
+
     if (payload.newPassword !== payload.confirmNewPassword) {
       setProfileError("Potvrda lozinke se ne poklapa.");
       scheduleProfileNoticeClear();

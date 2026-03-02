@@ -40,6 +40,7 @@ export default function PasswordCard({
               name="newPassword"
               value={passwordForm.newPassword}
               onChange={onPasswordFieldChange}
+              minLength={8}
               autoComplete="new-password"
               disabled={loadingProfile || savingPassword}
             />
@@ -57,6 +58,7 @@ export default function PasswordCard({
               name="confirmNewPassword"
               value={passwordForm.confirmNewPassword}
               onChange={onPasswordFieldChange}
+              minLength={8}
               autoComplete="new-password"
               disabled={loadingProfile || savingPassword}
             />
