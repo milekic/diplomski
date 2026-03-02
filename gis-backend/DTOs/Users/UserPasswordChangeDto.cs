@@ -8,7 +8,7 @@ namespace gis_backend.DTOs.Users
         public string CurrentPassword { get; set; } = string.Empty;
 
         [Required]
-        [MinLength(3)]
+        [MinLength(8)]
         public string NewPassword { get; set; } = string.Empty;
 
         [Required]

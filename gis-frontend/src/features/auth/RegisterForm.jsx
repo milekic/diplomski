@@ -30,6 +30,11 @@ export default function RegisterForm() {
     setError("");
     setSuccess("");
 
+    if (password.length < 8) {
+      setError("Lozinka mora imati najmanje 8 karaktera.");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("Lozinke se ne poklapaju.");
       return;
@@ -141,6 +146,7 @@ export default function RegisterForm() {
                   type={showPass ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  minLength={8}
                   
                   autoComplete="new-password"
                   required
@@ -154,6 +160,7 @@ export default function RegisterForm() {
                   type={showPass ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  minLength={8}
                   autoComplete="new-password"
                   required
                 />

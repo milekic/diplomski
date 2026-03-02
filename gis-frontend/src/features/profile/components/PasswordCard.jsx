@@ -5,6 +5,11 @@ export default function PasswordCard({
   onPasswordFieldChange,
   onChangePassword,
 }) {
+  const isPasswordFormValid =
+    passwordForm.currentPassword.length > 0 &&
+    passwordForm.newPassword.length >= 8 &&
+    passwordForm.confirmNewPassword.length >= 8;
+
   return (
     <div className="card border-0 shadow-sm h-100 my-profile-card">
       <div className="card-body p-4">
@@ -40,6 +45,7 @@ export default function PasswordCard({
               name="newPassword"
               value={passwordForm.newPassword}
               onChange={onPasswordFieldChange}
+              minLength={8}
               autoComplete="new-password"
               disabled={loadingProfile || savingPassword}
             />
@@ -57,6 +63,7 @@ export default function PasswordCard({
               name="confirmNewPassword"
               value={passwordForm.confirmNewPassword}
               onChange={onPasswordFieldChange}
+              minLength={8}
               autoComplete="new-password"
               disabled={loadingProfile || savingPassword}
             />
@@ -65,7 +72,7 @@ export default function PasswordCard({
           <button
             type="submit"
             className="btn btn-primary px-4 my-profile-save-btn"
-            disabled={loadingProfile || savingPassword}
+            disabled={loadingProfile || savingPassword || !isPasswordFormValid}
           >
             {savingPassword ? "Čuvanje..." : "Promijeni lozinku"}
           </button>
