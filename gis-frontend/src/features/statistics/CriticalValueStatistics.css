@@ -1,0 +1,49 @@
+.critical-chart {
+  background: #dddddd;
+  border: 1px solid #bdbdbd;
+  border-radius: 6px;
+  padding: 1rem 1rem 2.75rem;
+  overflow-x: auto;
+}
+
+.critical-chart__plot {
+  min-width: 520px;
+  height: 360px;
+  display: flex;
+  align-items: flex-end;
+  gap: 1.25rem;
+  border-bottom: 2px solid #111111;
+  padding: 0 0.25rem 0.35rem;
+}
+
+.critical-chart__group {
+  width: 74px;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.critical-chart__bar {
+  width: 64px;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: stretch;
+}
+
+.critical-chart__normal {
+  background: #0000ff;
+}
+
+.critical-chart__critical {
+  background: #ff0000;
+}
+
+.critical-chart__label {
+  margin-top: 0.55rem;
+  width: 100%;
+  font-size: 0.78rem;
+  transform: rotate(-35deg);
+  transform-origin: left top;
+  white-space: nowrap;
+}
