@@ -46,34 +46,28 @@ export default function CriticalValueStatistics() {
 
   const rows = normalizeStatisticsRows(rawRows);
   const bars = buildStackedBars(rows, 340);
+  const totalCritical = rows.reduce((sum, row) => sum + row.criticalCount, 0);
+  const totalNormal = rows.reduce((sum, row) => sum + row.normalCount, 0);
+  const chartMinWidth = `${Math.max(640, bars.length * 112)}px`;
 
   return (
     <div className="container-fluid py-4">
       <div className="container">
-        <h1 className="h4 mb-3">Statistike po oblastima</h1>
+        <div className="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+          <h1 className="h4 mb-0">Statistike po oblastima</h1>
 
-        <div className="d-flex align-items-center gap-3 mb-3">
-          <div className="d-flex align-items-center gap-2 small">
-            <span
-              style={{
-                display: "inline-block",
-                width: "12px",
-                height: "12px",
-                backgroundColor: "#ff0000",
-              }}
-            />
-            Kriticne vrijednosti
-          </div>
-          <div className="d-flex align-items-center gap-2 small">
-            <span
-              style={{
-                display: "inline-block",
-                width: "12px",
-                height: "12px",
-                backgroundColor: "#0000ff",
-              }}
-            />
-            Vrijednosti u granicama normale
+          <div className="d-flex flex-wrap align-items-center gap-3">
+            <div className="d-flex align-items-center gap-2 small">
+              <span className="critical-chart__legend-dot critical-chart__legend-dot--critical" />
+              Kriticne vrijednosti
+            </div>
+            <div className="d-flex align-items-center gap-2 small">
+              <span className="critical-chart__legend-dot critical-chart__legend-dot--normal" />
+              Vrijednosti u granicama normale
+            </div>
+            <div className="small text-muted">
+              Ukupno: <strong>{totalCritical + totalNormal}</strong>
+            </div>
           </div>
         </div>
 
@@ -89,23 +83,34 @@ export default function CriticalValueStatistics() {
           <div className="text-muted">Nema podataka za prikaz.</div>
         ) : (
           <div className="critical-chart">
-            <div className="critical-chart__plot">
+            <div className="critical-chart__plot" style={{ minWidth: chartMinWidth }}>
               {bars.map((bar) => (
                 <div className="critical-chart__group" key={bar.areaId}>
+                  <div className="critical-chart__value">{bar.totalCount}</div>
                   <div
-                    className="critical-chart__bar"
+                    className={`critical-chart__bar ${
+                      bar.hasData ? "" : "critical-chart__bar--empty"
+                    }`}
                     title={`Oblast: ${bar.areaName} | Kriticno: ${bar.criticalCount} | Normalno: ${bar.normalCount}`}
                   >
-                    <div
-                      className="critical-chart__normal"
-                      style={{ height: `${bar.normalHeight}px` }}
-                    />
-                    <div
-                      className="critical-chart__critical"
-                      style={{ height: `${bar.criticalHeight}px` }}
-                    />
+                    {bar.hasData ? (
+                      <>
+                        <div
+                          className="critical-chart__normal"
+                          style={{ height: `${bar.normalHeight}px` }}
+                        />
+                        <div
+                          className="critical-chart__critical"
+                          style={{ height: `${bar.criticalHeight}px` }}
+                        />
+                      </>
+                    ) : (
+                      <div className="critical-chart__empty-segment" />
+                    )}
                   </div>
-                  <div className="critical-chart__label">{bar.areaName}</div>
+                  <div className="critical-chart__label" title={bar.areaName}>
+                    {bar.areaName}
+                  </div>
                 </div>
               ))}
             </div>

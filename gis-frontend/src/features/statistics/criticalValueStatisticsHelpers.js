@@ -34,6 +34,38 @@ function safeScalePart(partValue, totalValue, scaledTotalHeight) {
   return Math.round((partValue / totalValue) * scaledTotalHeight);
 }
 
+function applyMinimumVisibleHeights({
+  normalCount,
+  criticalCount,
+  totalHeight,
+  normalHeight,
+  criticalHeight,
+}) {
+  if (totalHeight <= 0) {
+    return { normalHeight: 0, criticalHeight: 0 };
+  }
+
+  let nextNormalHeight = normalHeight;
+  let nextCriticalHeight = criticalHeight;
+
+  if (normalCount > 0 && nextNormalHeight === 0) nextNormalHeight = 2;
+  if (criticalCount > 0 && nextCriticalHeight === 0) nextCriticalHeight = 2;
+
+  const overflow = nextNormalHeight + nextCriticalHeight - totalHeight;
+  if (overflow > 0) {
+    if (nextNormalHeight >= nextCriticalHeight) {
+      nextNormalHeight = Math.max(0, nextNormalHeight - overflow);
+    } else {
+      nextCriticalHeight = Math.max(0, nextCriticalHeight - overflow);
+    }
+  }
+
+  return {
+    normalHeight: nextNormalHeight,
+    criticalHeight: nextCriticalHeight,
+  };
+}
+
 export function buildStackedBars(rows, chartHeightPx = 340) {
   if (!Array.isArray(rows) || rows.length === 0) return [];
 
@@ -45,6 +77,7 @@ export function buildStackedBars(rows, chartHeightPx = 340) {
   if (maxTotal <= 0) {
     return rows.map((row) => ({
       ...row,
+      hasData: false,
       totalHeight: 0,
       normalHeight: 0,
       criticalHeight: 0,
@@ -53,15 +86,27 @@ export function buildStackedBars(rows, chartHeightPx = 340) {
 
   return rows.map((row) => {
     const totalHeight = Math.round((row.totalCount / maxTotal) * chartHeightPx);
-    const normalHeight = safeScalePart(row.normalCount, row.totalCount, totalHeight);
-    const criticalHeight = safeScalePart(
+    const normalHeightRaw = safeScalePart(
+      row.normalCount,
+      row.totalCount,
+      totalHeight
+    );
+    const criticalHeightRaw = safeScalePart(
       row.criticalCount,
       row.totalCount,
       totalHeight
     );
+    const { normalHeight, criticalHeight } = applyMinimumVisibleHeights({
+      normalCount: row.normalCount,
+      criticalCount: row.criticalCount,
+      totalHeight,
+      normalHeight: normalHeightRaw,
+      criticalHeight: criticalHeightRaw,
+    });
 
     return {
       ...row,
+      hasData: row.totalCount > 0,
       totalHeight,
       normalHeight,
       criticalHeight,
