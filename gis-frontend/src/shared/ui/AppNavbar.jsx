@@ -1,4 +1,4 @@
-import { Link, NavLink } from "react-router-dom";
+﻿import { Link, NavLink } from "react-router-dom";
 import "./AppNavbar.css";
 
 export default function AppNavbar({ userLabel, role, onLogout }) {
@@ -39,12 +39,21 @@ export default function AppNavbar({ userLabel, role, onLogout }) {
             </li>
           )}
 
+          
+          {role === "USER" && (
+            <li className="nav-item">
+              <NavLink to="/statistics" className={linkClass}>
+                Statistike
+              </NavLink>
+            </li>
+          )}
+
          
-          {/* Početna za ADMIN-a */}
+          {/* PoÄetna za ADMIN-a */}
           {role === "ADMIN" && (
           <li className="nav-item">
             <NavLink to="/adminDashboard" className={linkClass}>
-              Početna
+              PoÄetna
             </NavLink>
           </li>
           )}
@@ -74,3 +83,4 @@ export default function AppNavbar({ userLabel, role, onLogout }) {
     </nav>
   );
 }
+

@@ -36,6 +36,11 @@ namespace gis_backend.Services
                 .ToList();
         }
 
+        public async Task<List<AreaMeasurementsSummaryDto>> GetMeasurementsSummaryForMyAreasAsync(int userId)
+        {
+            return await _repo.GetMeasurementsSummaryForUserAreasAsync(userId);
+        }
+
         public async Task<AreaDeleteResponseDto> SoftDeleteAsync(int id, int userId)
         {
             var area = await _repo.GetByIdForOwnerAsync(id, userId);

@@ -1,4 +1,5 @@
-﻿using gis_backend.Models;
+﻿using gis_backend.DTOs.Areas;
+using gis_backend.Models;
 
 namespace gis_backend.Repositories
 {
@@ -12,7 +13,6 @@ namespace gis_backend.Repositories
         Task SaveChangesAsync();
         Task AddAsync(Area area);
         Task<List<Area>> GetVisibleAreasAsync(int userId);
-
-
+        Task<List<AreaMeasurementsSummaryDto>> GetMeasurementsSummaryForUserAreasAsync(int userId);
     }
 }
