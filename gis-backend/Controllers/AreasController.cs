@@ -38,6 +38,15 @@ namespace gis_backend.Controllers
             return Ok(list);
         }
 
+        // GET: api/areas/my/measurements-summary
+        [HttpGet("my/measurements-summary")]
+        public async Task<ActionResult<List<AreaMeasurementsSummaryDto>>> GetMyAreasMeasurementsSummary()
+        {
+            var userId = GetCurrentUserId();
+            var list = await _service.GetMeasurementsSummaryForMyAreasAsync(userId);
+            return Ok(list);
+        }
+
         //vracaju se sve korisnikove aktivne oblasti + globalne oblasti drugih korisnika (upotreba u LayersTree)
         // GET: api/areas/visible
         [HttpGet("visible")]

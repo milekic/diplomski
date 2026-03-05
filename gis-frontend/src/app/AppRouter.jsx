@@ -7,6 +7,7 @@ import AreasPage from "../pages/AreasPage";
 import AppLayout from "./AppLayout";
 import NewEventPage from "../pages/NewEventPage";
 import MyProfilePage from "../pages/MyProfilePage";
+import StatisticsPage from "../pages/StatisticsPage";
 
 export default function AppRouter() {
   return (
@@ -24,6 +25,7 @@ export default function AppRouter() {
           <Route path="/userDashboard" element={<UserDashboardPage />} />
           <Route path="/adminDashboard" element={<AdminDashboardPage />} />
           <Route path="/areas" element={<AreasPage />} />
+          <Route path="/statistics" element={<StatisticsPage />} />
           <Route path="/myProfile" element={<MyProfilePage />} />
           
         </Route>

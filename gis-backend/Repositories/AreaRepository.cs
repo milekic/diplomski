@@ -1,4 +1,5 @@
 ﻿using gis_backend.Data;
+using gis_backend.DTOs.Areas;
 using gis_backend.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -57,15 +58,31 @@ namespace gis_backend.Repositories
                 .Where(a =>
                     a.IsActive &&
                     (
-                        a.OwnerUserId == userId        
-                        || a.IsGlobal                  
+                        a.OwnerUserId == userId
+                        || a.IsGlobal
                     )
                 )
                 .OrderBy(a => a.Name)
                 .ToListAsync();
         }
 
+        public async Task<List<AreaMeasurementsSummaryDto>> GetMeasurementsSummaryForUserAreasAsync(int userId)
+        {
+            var query =
+                from area in _context.Areas.AsNoTracking()
+                where area.OwnerUserId == userId && area.IsActive
+                join measurement in _context.Measurements.AsNoTracking()
+                    on area.Id equals measurement.AreaId into measurementsGroup
+                orderby area.Name
+                select new AreaMeasurementsSummaryDto
+                {
+                    AreaId = area.Id,
+                    AreaName = area.Name,
+                    CriticalCount = measurementsGroup.Count(m => m.IsCritical),
+                    NormalCount = measurementsGroup.Count(m => !m.IsCritical)
+                };
 
-
+            return await query.ToListAsync();
+        }
     }
 }
