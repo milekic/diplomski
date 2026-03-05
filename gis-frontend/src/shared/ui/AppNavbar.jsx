@@ -43,7 +43,7 @@ export default function AppNavbar({ userLabel, role, onLogout }) {
           {role === "USER" && (
             <li className="nav-item">
               <NavLink to="/statistics" className={linkClass}>
-                Statistike
+                Statistika
               </NavLink>
             </li>
           )}

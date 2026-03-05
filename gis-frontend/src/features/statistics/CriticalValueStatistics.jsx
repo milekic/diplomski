@@ -28,7 +28,7 @@ export default function CriticalValueStatistics() {
       } catch {
         if (!cancelled) {
           setRawRows([]);
-          setError("Ne mogu ucitati statistike.");
+          setError("Ne mogu učitati statistike.");
         }
       } finally {
         if (!cancelled) {
@@ -54,20 +54,18 @@ export default function CriticalValueStatistics() {
     <div className="container-fluid py-4">
       <div className="container">
         <div className="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
-          <h1 className="h4 mb-0">Statistike po oblastima</h1>
+          <h1 className="h4 mb-0">Statistika po oblastima</h1>
 
           <div className="d-flex flex-wrap align-items-center gap-3">
             <div className="d-flex align-items-center gap-2 small">
               <span className="critical-chart__legend-dot critical-chart__legend-dot--critical" />
-              Kriticne vrijednosti
+              Kritične vrijednosti
             </div>
             <div className="d-flex align-items-center gap-2 small">
               <span className="critical-chart__legend-dot critical-chart__legend-dot--normal" />
               Vrijednosti u granicama normale
             </div>
-            <div className="small text-muted">
-              Ukupno: <strong>{totalCritical + totalNormal}</strong>
-            </div>
+          
           </div>
         </div>
 
@@ -91,17 +89,18 @@ export default function CriticalValueStatistics() {
                     className={`critical-chart__bar ${
                       bar.hasData ? "" : "critical-chart__bar--empty"
                     }`}
-                    title={`Oblast: ${bar.areaName} | Kriticno: ${bar.criticalCount} | Normalno: ${bar.normalCount}`}
                   >
                     {bar.hasData ? (
                       <>
                         <div
                           className="critical-chart__normal"
                           style={{ height: `${bar.normalHeight}px` }}
+                          title={`Oblast: ${bar.areaName} | Broj mjerenja u granicama normale: ${bar.normalCount}`}
                         />
                         <div
                           className="critical-chart__critical"
                           style={{ height: `${bar.criticalHeight}px` }}
+                          title={`Oblast: ${bar.areaName} | Broj kriticnih mjerenja: ${bar.criticalCount}`}
                         />
                       </>
                     ) : (
