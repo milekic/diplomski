@@ -76,7 +76,7 @@ export default function CriticalValueStatistics() {
         )}
 
         {loading ? (
-          <div className="text-muted">Ucitavanje...</div>
+          <div className="text-muted">Učitavanje...</div>
         ) : bars.length === 0 ? (
           <div className="text-muted">Nema podataka za prikaz.</div>
         ) : (
@@ -100,7 +100,7 @@ export default function CriticalValueStatistics() {
                         <div
                           className="critical-chart__critical"
                           style={{ height: `${bar.criticalHeight}px` }}
-                          title={`Oblast: ${bar.areaName} | Broj kriticnih mjerenja: ${bar.criticalCount}`}
+                          title={`Oblast: ${bar.areaName} | Broj kritičnih mjerenja: ${bar.criticalCount}`}
                         />
                       </>
                     ) : (
